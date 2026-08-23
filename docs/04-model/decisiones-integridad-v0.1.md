@@ -382,3 +382,39 @@ Este documento corresponde a la versión 0.1 de las decisiones de integridad de 
 
 Las restricciones podrán ajustarse durante las siguientes etapas del diseño de la base de datos, especialmente al definir el modelo físico, las restricciones SQL y las reglas de implementación.
 
+
+
+\---
+
+
+
+\## 11. Trazabilidad de reglas de negocio
+
+
+
+| RN/RF | Regla | Protección prevista | Justificación |
+
+|---|---|---|---|
+
+| RN-01 | Una residencia debe estar asociada a una persona y a una unidad. | FK + NN | Garantiza que toda residencia tenga referencias válidas a una persona y una unidad existentes. |
+
+| RN-02 | Una reserva debe estar asociada a un área común y a una persona. | FK + NN | Garantiza que toda reserva corresponda a un área común y a una persona existentes. |
+
+| RN-03 | Una incidencia debe estar asociada a una unidad y a una persona. | FK + NN | Garantiza que toda incidencia tenga una unidad y una persona válidas. |
+
+
+
+\## 12. Prueba de contradicción
+
+
+
+| Regla del proyecto | Estado inválido posible | Protección prevista |
+
+|---|---|---|
+
+| RN-01 | Registrar una residencia con un `persona\_id` o `unidad\_id` inexistente. | FK + NN |
+
+| RN-02 | Registrar una reserva con un `area\_comun\_id` o `persona\_id` inexistente. | FK + NN |
+
+| RN-03 | Registrar una incidencia con un `unidad\_id` o `persona\_id` inexistente. | FK + NN |
+
