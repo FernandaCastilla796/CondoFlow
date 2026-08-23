@@ -14,15 +14,19 @@ Este modelo corresponde a una primera versión y podrá ajustarse posteriormente
 
 
 
-\## 2. Tablas núcleo
+\## 2. Alcance del modelo relacional
 
 
 
-El modelo relacional inicial se centra en las entidades principales necesarias para soportar la operación del condominio.
+El modelo relacional v0.1 se concentra en las tablas núcleo necesarias para soportar los flujos principales de habitabilidad, portería, reservas, incidencias y mantenimiento.
 
 
 
-Las tablas núcleo consideradas en esta versión son:
+Las entidades `Comunicado` y `Notificación` se mantienen identificadas en el modelo conceptual, pero quedan fuera del núcleo relacional de esta versión y podrán incorporarse en una versión posterior.
+
+
+
+\## 3. Tablas núcleo
 
 
 
@@ -44,25 +48,25 @@ Las tablas núcleo consideradas en esta versión son:
 
 
 
-\## 3. Criterios de transformación
+\## 4. Criterios de transformación
 
 
 
 \- Las relaciones 1:N se transforman colocando la clave foránea en el lado N.
 
-\- Las relaciones N:M se resolverán mediante una tabla puente cuando corresponda.
+\- Las relaciones N:M se resuelven mediante una tabla puente cuando corresponda.
 
-\- La optionalidad de las relaciones se registrará antes de definir restricciones físicas.
+\- La optionalidad de las relaciones se registra antes de definir restricciones físicas.
 
-\- Los identificadores naturales relevantes se considerarán como candidatos a restricciones de unicidad.
+\- Los identificadores naturales relevantes se consideran candidatos a restricciones de unicidad.
 
-\- Las claves primarias se definirán para identificar de forma única cada registro.
+\- Las claves primarias identifican de forma única cada registro.
 
-\- Las claves foráneas mantendrán la integridad referencial entre las tablas relacionadas.
+\- Las claves foráneas mantienen la integridad referencial entre las tablas relacionadas.
 
 
 
-\## 4. Tablas candidatas núcleo
+\## 5. Tablas candidatas núcleo
 
 
 
@@ -74,13 +78,13 @@ Propósito: representa una unidad habitacional del condominio.
 
 
 
-\- unidad\_id \[PK]
+\- `unidad\_id` \[PK]
 
-\- codigo
+\- `numero\_unidad`
 
-\- tipo
+\- `tipo`
 
-\- estado
+\- `estado`
 
 
 
@@ -88,21 +92,23 @@ Propósito: representa una unidad habitacional del condominio.
 
 
 
-Propósito: representa una persona relacionada con el condominio.
+Propósito: representa a una persona relacionada con el condominio.
 
 
 
-\- persona\_id \[PK]
+\- `persona\_id` \[PK]
 
-\- nombre
+\- `nombre`
 
-\- apellido
+\- `apellido`
 
-\- documento
+\- `documento`
 
-\- telefono
+\- `telefono`
 
-\- correo
+\- `correo`
+
+\- `estado`
 
 
 
@@ -110,17 +116,23 @@ Propósito: representa una persona relacionada con el condominio.
 
 
 
-Propósito: relaciona personas con unidades del condominio.
+Propósito: relaciona una persona con una unidad del condominio.
 
 
 
-\- residencia\_id \[PK]
+\- `residencia\_id` \[PK]
 
-\- persona\_id \[FK -> persona.persona\_id]
+\- `persona\_id` \[FK -> persona.persona\_id]
 
-\- unidad\_id \[FK -> unidad.unidad\_id]
+\- `unidad\_id` \[FK -> unidad.unidad\_id]
 
-\- tipo\_residencia
+\- `tipo\_residencia`
+
+\- `fecha\_inicio`
+
+\- `fecha\_fin`
+
+\- `estado`
 
 
 
@@ -132,15 +144,17 @@ Propósito: representa un área común disponible para los residentes.
 
 
 
-\- area\_comun\_id \[PK]
+\- `area\_comun\_id` \[PK]
 
-\- nombre
+\- `nombre`
 
-\- descripcion
+\- `descripcion`
 
-\- capacidad
+\- `capacidad`
 
-\- estado
+\- `horario\_disponible`
+
+\- `estado`
 
 
 
@@ -152,17 +166,19 @@ Propósito: registra las reservas realizadas sobre las áreas comunes.
 
 
 
-\- reserva\_id \[PK]
+\- `reserva\_id` \[PK]
 
-\- area\_comun\_id \[FK -> area\_comun.area\_comun\_id]
+\- `area\_comun\_id` \[FK -> area\_comun.area\_comun\_id]
 
-\- persona\_id \[FK -> persona.persona\_id]
+\- `persona\_id` \[FK -> persona.persona\_id]
 
-\- fecha\_inicio
+\- `fecha\_inicio`
 
-\- fecha\_fin
+\- `fecha\_fin`
 
-\- estado
+\- `estado`
+
+\- `observaciones`
 
 
 
@@ -174,19 +190,21 @@ Propósito: registra las visitas asociadas a una unidad.
 
 
 
-\- visita\_id \[PK]
+\- `visita\_id` \[PK]
 
-\- unidad\_id \[FK -> unidad.unidad\_id]
+\- `unidad\_id` \[FK -> unidad.unidad\_id]
 
-\- nombre\_visitante
+\- `nombre\_visitante`
 
-\- documento\_visitante
+\- `documento\_visitante`
 
-\- fecha\_ingreso
+\- `fecha\_ingreso`
 
-\- fecha\_salida
+\- `fecha\_salida`
 
-\- estado
+\- `estado`
+
+\- `observaciones`
 
 
 
@@ -198,17 +216,23 @@ Propósito: registra problemas o situaciones que requieren atención.
 
 
 
-\- incidencia\_id \[PK]
+\- `incidencia\_id` \[PK]
 
-\- unidad\_id \[FK -> unidad.unidad\_id]
+\- `unidad\_id` \[FK -> unidad.unidad\_id]
 
-\- persona\_id \[FK -> persona.persona\_id]
+\- `persona\_id` \[FK -> persona.persona\_id]
 
-\- descripcion
+\- `titulo`
 
-\- fecha\_reporte
+\- `descripcion`
 
-\- estado
+\- `fecha\_reporte`
+
+\- `prioridad`
+
+\- `estado`
+
+\- `fecha\_resolucion`
 
 
 
@@ -220,199 +244,121 @@ Propósito: registra las tareas de mantenimiento del condominio.
 
 
 
-\- tarea\_mantenimiento\_id \[PK]
+\- `tarea\_mantenimiento\_id` \[PK]
 
-\- incidencia\_id \[FK -> incidencia.incidencia\_id]
+\- `incidencia\_id` \[FK -> incidencia.incidencia\_id]
 
-\- descripcion
+\- `descripcion`
 
-\- fecha\_asignacion
+\- `fecha\_asignacion`
 
-\- fecha\_finalizacion
+\- `fecha\_finalizacion`
 
-\- estado
+\- `prioridad`
 
+\- `estado`
 
 
-\## 4. Relaciones y claves foráneas
 
+\## 6. Relaciones
 
 
-\### 4.1 Persona — Residencia
 
+1\. `persona` 1 ---- N `residencia`
 
+2\. `unidad` 1 ---- N `residencia`
 
-\- Una persona puede tener una o varias residencias registradas.
+3\. `area\_comun` 1 ---- N `reserva`
 
-\- Cada residencia corresponde a una sola persona.
+4\. `persona` 1 ---- N `reserva`
 
-\- Cardinalidad: 1:N.
+5\. `unidad` 1 ---- N `visita`
 
-\- FK: `residencia.persona\_id` → `persona.persona\_id`.
+6\. `unidad` 1 ---- N `incidencia`
 
+7\. `persona` 1 ---- N `incidencia`
 
+8\. `incidencia` 1 ---- N `tarea\_mantenimiento`
 
-\### 4.2 Unidad — Residencia
 
 
+\## 7. Optionalidad
 
-\- Una unidad puede tener uno o varios registros de residencia.
 
-\- Cada residencia corresponde a una sola unidad.
 
-\- Cardinalidad: 1:N.
+\- `residencia.persona\_id`: obligatoria.
 
-\- FK: `residencia.unidad\_id` → `unidad.unidad\_id`.
+\- `residencia.unidad\_id`: obligatoria.
 
+\- `reserva.area\_comun\_id`: obligatoria.
 
+\- `reserva.persona\_id`: obligatoria.
 
-\### 4.3 Área común — Reserva
+\- `visita.unidad\_id`: obligatoria.
 
+\- `incidencia.unidad\_id`: obligatoria.
 
+\- `incidencia.persona\_id`: obligatoria.
 
-\- Un área común puede tener varias reservas.
+\- `tarea\_mantenimiento.incidencia\_id`: obligatoria.
 
-\- Cada reserva corresponde a una sola área común.
 
-\- Cardinalidad: 1:N.
 
-\- FK: `reserva.area\_comun\_id` → `area\_comun.area\_comun\_id`.
+\## 8. Restricciones de unicidad
 
 
 
-\### 4.4 Persona — Reserva
+\- `unidad.numero\_unidad` se considera único dentro del condominio.
 
+\- `persona.correo` se considera único.
 
+\- `area\_comun.nombre` se considera único.
 
-\- Una persona puede realizar varias reservas.
 
-\- Cada reserva corresponde a una sola persona.
 
-\- Cardinalidad: 1:N.
-
-\- FK: `reserva.persona\_id` → `persona.persona\_id`.
-
-
-
-\### 4.5 Unidad — Visita
-
-
-
-\- Una unidad puede tener varias visitas.
-
-\- Cada visita está asociada a una sola unidad.
-
-\- Cardinalidad: 1:N.
-
-\- FK: `visita.unidad\_id` → `unidad.unidad\_id`.
-
-
-
-\### 4.6 Unidad — Incidencia
-
-
-
-\- Una unidad puede tener varias incidencias.
-
-\- Cada incidencia corresponde a una sola unidad.
-
-\- Cardinalidad: 1:N.
-
-\- FK: `incidencia.unidad\_id` → `unidad.unidad\_id`.
-
-
-
-\### 4.7 Persona — Incidencia
-
-
-
-\- Una persona puede registrar varias incidencias.
-
-\- Cada incidencia corresponde a una sola persona.
-
-\- Cardinalidad: 1:N.
-
-\- FK: `incidencia.persona\_id` → `persona.persona\_id`.
-
-
-
-\### 4.8 Incidencia — Tarea de mantenimiento
-
-
-
-\- Una incidencia puede generar una o varias tareas de mantenimiento.
-
-\- Cada tarea de mantenimiento corresponde a una incidencia.
-
-\- Cardinalidad: 1:N.
-
-\- FK: `tarea\_mantenimiento.incidencia\_id` → `incidencia.incidencia\_id`.
-
-
-
-
-
-\## 5. Optionalidad de las claves foráneas
-
-
-
-\- `residencia.persona\_id`: obligatoria. Una residencia debe estar asociada a una persona.
-
-\- `residencia.unidad\_id`: obligatoria. Una residencia debe estar asociada a una unidad.
-
-\- `reserva.area\_comun\_id`: obligatoria. Una reserva debe corresponder a un área común.
-
-\- `reserva.persona\_id`: obligatoria. Una reserva debe estar asociada a una persona.
-
-\- `visita.unidad\_id`: obligatoria. Una visita debe estar asociada a una unidad.
-
-\- `incidencia.unidad\_id`: obligatoria. Una incidencia debe estar asociada a una unidad.
-
-\- `incidencia.persona\_id`: obligatoria. Una incidencia debe estar asociada a una persona.
-
-\- `tarea\_mantenimiento.incidencia\_id`: obligatoria. Una tarea de mantenimiento debe estar asociada a una incidencia.
-
-
-
-
-
-\## 6. Restricciones de unicidad
-
-
-
-Las siguientes claves naturales se consideran candidatas a restricciones de unicidad:
-
-
-
-\- `persona.correo\_electronico`: debe ser único para evitar que dos personas utilicen el mismo correo.
-
-\- `unidad.numero\_unidad`: debe ser único dentro del condominio.
-
-\- `area\_comun.nombre`: debe ser único para evitar duplicar el nombre de un área común.
-
-
-
-\## 7. Normalización inicial
-
-
-
-El modelo relacional se plantea siguiendo criterios iniciales de normalización:
+\## 9. Normalización inicial
 
 
 
 \- Cada tabla representa una entidad o relación con una responsabilidad específica.
 
-\- Los atributos contienen valores simples y no se mantienen grupos repetitivos.
+\- Los atributos contienen valores simples y no grupos repetitivos.
 
 \- Los atributos dependen de la clave primaria de su propia tabla.
 
 \- Las relaciones entre entidades se representan mediante claves foráneas.
 
-\- La relación entre `persona` y `unidad` se resuelve mediante la tabla intermedia `residencia`.
+\- `residencia` representa la relación entre `persona` y `unidad`.
 
-\- No se incluyen datos derivados cuando pueden obtenerse a partir de otras relaciones o atributos.
-
-
+\- No se mantienen listas ni grupos multivaluados dentro de una misma columna.
 
 
+
+\## 10. Reglas relevantes
+
+
+
+\- Una residencia debe relacionar una persona con una unidad.
+
+\- Una reserva debe indicar el área común y el período de uso solicitado.
+
+\- Una reserva no debe permitir conflictos de horario para la misma área común.
+
+\- Una visita debe estar asociada a una unidad de destino.
+
+\- Una incidencia debe conservar la información necesaria para su seguimiento.
+
+\- Una tarea de mantenimiento debe estar asociada a una incidencia.
+
+
+
+\## 11. Pendientes
+
+
+
+\- Incorporar `comunicado` y `notificacion` cuando formen parte del siguiente núcleo funcional del modelo.
+
+\- Definir restricciones físicas definitivas durante el diseño de la base de datos.
+
+\- Revisar los estados y sus transiciones según las reglas de negocio.
 

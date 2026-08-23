@@ -10,23 +10,19 @@ CondoFlow utilizará BIGINT autogenerado para las claves primarias técnicas.
 
 
 
-Las claves primarias serán independientes de los datos visibles del negocio para mantener estables las relaciones entre las tablas.
+Las claves primarias serán independientes de los datos visibles del negocio.
 
 
 
-Los datos de negocio que requieren unicidad son:
+Las claves naturales que requieren UNIQUE son:
 
 
 
 \- `unidad.numero\_unidad`
 
-\- `persona.correo\_electronico`
+\- `persona.correo`
 
 \- `area\_comun.nombre`
-
-
-
-Estos atributos no serán utilizados como claves primarias.
 
 
 
@@ -46,7 +42,7 @@ Propósito: Representar cada unidad habitacional del condominio.
 
 |---|---|---|---|---|
 
-| unidad\_id | BIGINT | NO | PK | Diseño |
+| unidad\_id | BIGINT | NO | PK | Modelo relacional |
 
 | numero\_unidad | VARCHAR(20) | NO | UNIQUE | Modelo relacional |
 
@@ -60,13 +56,13 @@ Propósito: Representar cada unidad habitacional del condominio.
 
 
 
-\- `unidad\_id` será la identificación técnica de la unidad.
+\- `unidad\_id` es la PK técnica.
 
-\- `numero\_unidad` será UNIQUE porque identifica la unidad dentro del condominio.
+\- `numero\_unidad` debe ser único dentro del condominio.
 
-\- `tipo` será VARCHAR porque representa una clasificación de la unidad.
+\- `tipo` utiliza texto corto porque representa una clasificación.
 
-\- `estado` será VARCHAR con valores controlados.
+\- `estado` utiliza valores controlados.
 
 
 
@@ -74,7 +70,7 @@ Propósito: Representar cada unidad habitacional del condominio.
 
 
 
-La transición de estado de una unidad puede requerir lógica de negocio adicional.
+Las transiciones de estado de una unidad pueden requerir lógica de negocio.
 
 
 
@@ -86,7 +82,7 @@ La transición de estado de una unidad puede requerir lógica de negocio adicion
 
 
 
-Propósito: Representar a las personas relacionadas con las unidades, reservas e incidencias del condominio.
+Propósito: Representar a las personas relacionadas con el condominio.
 
 
 
@@ -94,13 +90,19 @@ Propósito: Representar a las personas relacionadas con las unidades, reservas e
 
 |---|---|---|---|---|
 
-| persona\_id | BIGINT | NO | PK | Diseño |
+| persona\_id | BIGINT | NO | PK | Modelo relacional |
 
 | nombre | VARCHAR(100) | NO | — | Modelo relacional |
 
 | apellido | VARCHAR(100) | NO | — | Modelo relacional |
 
-| correo\_electronico | VARCHAR(150) | NO | UNIQUE | Modelo relacional |
+| documento | VARCHAR(50) | NO | — | Modelo relacional |
+
+| telefono | VARCHAR(30) | NO | — | Modelo relacional |
+
+| correo | VARCHAR(150) | NO | UNIQUE | Modelo relacional |
+
+| estado | VARCHAR(30) | NO | CHECK / dominio controlado | Modelo relacional |
 
 
 
@@ -108,19 +110,15 @@ Propósito: Representar a las personas relacionadas con las unidades, reservas e
 
 
 
-\- `persona\_id` será la identificación técnica de la persona.
+\- `persona\_id` es la PK técnica.
 
-\- `correo\_electronico` será UNIQUE para evitar duplicar personas mediante el mismo correo.
+\- `correo` debe ser único.
 
-\- `nombre` y `apellido` serán obligatorios.
+\- `documento` se conserva como dato de identificación de la persona.
 
+\- `telefono` se maneja como texto porque no se utiliza para operaciones matemáticas.
 
-
-\### Regla que NO se resuelve sólo con constraint simple
-
-
-
-La validación de una persona y su relación con una residencia depende de las reglas de negocio del sistema.
+\- `estado` utiliza valores controlados.
 
 
 
@@ -132,7 +130,7 @@ La validación de una persona y su relación con una residencia depende de las r
 
 
 
-Propósito: Representar la relación entre una persona y una unidad del condominio.
+Propósito: Relacionar una persona con una unidad del condominio.
 
 
 
@@ -140,11 +138,19 @@ Propósito: Representar la relación entre una persona y una unidad del condomin
 
 |---|---|---|---|---|
 
-| residencia\_id | BIGINT | NO | PK | Diseño |
+| residencia\_id | BIGINT | NO | PK | Modelo relacional |
 
 | persona\_id | BIGINT | NO | FK → persona.persona\_id | Modelo relacional |
 
 | unidad\_id | BIGINT | NO | FK → unidad.unidad\_id | Modelo relacional |
+
+| tipo\_residencia | VARCHAR(50) | NO | — | Modelo relacional |
+
+| fecha\_inicio | DATE | NO | — | Modelo relacional |
+
+| fecha\_fin | DATE | SÍ | — | Modelo relacional |
+
+| estado | VARCHAR(30) | NO | CHECK / dominio controlado | Modelo relacional |
 
 
 
@@ -152,11 +158,15 @@ Propósito: Representar la relación entre una persona y una unidad del condomin
 
 
 
-\- `residencia\_id` será la identificación técnica del registro.
+\- `residencia\_id` es la PK técnica.
 
-\- `persona\_id` y `unidad\_id` serán obligatorios.
+\- `persona\_id` y `unidad\_id` son obligatorios.
 
-\- Las claves foráneas garantizarán que la persona y la unidad existan.
+\- `fecha\_inicio` representa el inicio de la relación y sólo requiere día calendario.
+
+\- `fecha\_fin` puede ser NULL mientras la residencia continúe vigente.
+
+\- `estado` utiliza valores controlados.
 
 
 
@@ -164,7 +174,7 @@ Propósito: Representar la relación entre una persona y una unidad del condomin
 
 
 
-Si el sistema necesita controlar la vigencia o historial de una residencia, esa lógica requerirá reglas adicionales.
+El control de residencia vigente e histórica depende del estado y de la combinación de registros existentes.
 
 
 
@@ -176,7 +186,7 @@ Si el sistema necesita controlar la vigencia o historial de una residencia, esa 
 
 
 
-Propósito: Representar las áreas comunes disponibles en el condominio.
+Propósito: Representar las áreas comunes disponibles para los residentes.
 
 
 
@@ -184,13 +194,15 @@ Propósito: Representar las áreas comunes disponibles en el condominio.
 
 |---|---|---|---|---|
 
-| area\_comun\_id | BIGINT | NO | PK | Diseño |
+| area\_comun\_id | BIGINT | NO | PK | Modelo relacional |
 
 | nombre | VARCHAR(100) | NO | UNIQUE | Modelo relacional |
 
 | descripcion | TEXT | NO | — | Modelo relacional |
 
-| capacidad | INTEGER | NO | CHECK / valor positivo | Modelo relacional |
+| capacidad | INTEGER | NO | CHECK > 0 | Modelo relacional |
+
+| horario\_disponible | VARCHAR(100) | NO | — | Modelo relacional |
 
 | estado | VARCHAR(30) | NO | CHECK / dominio controlado | Modelo relacional |
 
@@ -200,21 +212,17 @@ Propósito: Representar las áreas comunes disponibles en el condominio.
 
 
 
-\- `area\_comun\_id` será la identificación técnica del área.
+\- `area\_comun\_id` es la PK técnica.
 
-\- `nombre` será UNIQUE.
+\- `nombre` debe ser único.
 
-\- `capacidad` será INTEGER porque representa una cantidad de personas.
+\- `descripcion` utiliza TEXT por su posible extensión.
 
-\- `estado` tendrá valores controlados.
+\- `capacidad` es INTEGER y debe ser mayor que cero.
 
+\- `horario\_disponible` conserva la información del horario del área.
 
-
-\### Regla que NO se resuelve sólo con constraint simple
-
-
-
-La disponibilidad de un área común para una reserva depende de otras reservas existentes.
+\- `estado` utiliza valores controlados.
 
 
 
@@ -226,7 +234,7 @@ La disponibilidad de un área común para una reserva depende de otras reservas 
 
 
 
-Propósito: Representar la reserva de un área común realizada por una persona.
+Propósito: Registrar las reservas de áreas comunes realizadas por personas.
 
 
 
@@ -234,7 +242,7 @@ Propósito: Representar la reserva de un área común realizada por una persona.
 
 |---|---|---|---|---|
 
-| reserva\_id | BIGINT | NO | PK | Diseño |
+| reserva\_id | BIGINT | NO | PK | Modelo relacional |
 
 | area\_comun\_id | BIGINT | NO | FK → area\_comun.area\_comun\_id | Modelo relacional |
 
@@ -246,21 +254,23 @@ Propósito: Representar la reserva de un área común realizada por una persona.
 
 | estado | VARCHAR(30) | NO | CHECK / dominio controlado | Modelo relacional |
 
+| observaciones | TEXT | SÍ | — | Modelo relacional |
+
 
 
 \### Decisiones
 
 
 
-\- `reserva\_id` será la identificación técnica de la reserva.
+\- `reserva\_id` es la PK técnica.
 
-\- `area\_comun\_id` y `persona\_id` serán obligatorios.
+\- `area\_comun\_id` y `persona\_id` son obligatorios.
 
-\- `fecha\_inicio` y `fecha\_fin` serán TIMESTAMPTZ porque la reserva depende de fecha y hora.
+\- `fecha\_inicio` y `fecha\_fin` utilizan TIMESTAMPTZ porque importa la fecha y hora.
 
 \- `fecha\_fin` debe ser posterior a `fecha\_inicio`.
 
-\- `estado` utilizará valores controlados.
+\- `observaciones` puede quedar NULL cuando no existen observaciones.
 
 
 
@@ -268,7 +278,7 @@ Propósito: Representar la reserva de un área común realizada por una persona.
 
 
 
-No se debe permitir que existan reservas de la misma área común con horarios solapados. Esta regla requiere consultar otras filas y deberá resolverse mediante lógica transaccional o una restricción avanzada.
+No se debe permitir el solapamiento de reservas de una misma área común. Esta validación requiere comparar diferentes filas.
 
 
 
@@ -280,7 +290,7 @@ No se debe permitir que existan reservas de la misma área común con horarios s
 
 
 
-Propósito: Representar el registro de visitas asociadas a una unidad del condominio.
+Propósito: Registrar las visitas asociadas a una unidad del condominio.
 
 
 
@@ -288,7 +298,7 @@ Propósito: Representar el registro de visitas asociadas a una unidad del condom
 
 |---|---|---|---|---|
 
-| visita\_id | BIGINT | NO | PK | Diseño |
+| visita\_id | BIGINT | NO | PK | Modelo relacional |
 
 | unidad\_id | BIGINT | NO | FK → unidad.unidad\_id | Modelo relacional |
 
@@ -302,33 +312,25 @@ Propósito: Representar el registro de visitas asociadas a una unidad del condom
 
 | estado | VARCHAR(30) | NO | CHECK / dominio controlado | Modelo relacional |
 
+| observaciones | TEXT | SÍ | — | Modelo relacional |
+
 
 
 \### Decisiones
 
 
 
-\- `visita\_id` será la identificación técnica de la visita.
+\- `visita\_id` es la PK técnica.
 
-\- `unidad\_id` será obligatorio.
+\- `unidad\_id` es obligatorio.
 
-\- `nombre\_visitante` y `documento\_visitante` serán obligatorios.
+\- `fecha\_ingreso` es obligatorio.
 
-\- `fecha\_ingreso` será obligatoria.
+\- `fecha\_salida` puede ser NULL mientras la visita esté activa.
 
-\- `fecha\_salida` podrá ser NULL mientras la visita se encuentre activa.
+\- `observaciones` puede ser NULL.
 
-\- Las fechas utilizarán TIMESTAMPTZ porque representan eventos con fecha y hora.
-
-\- `estado` tendrá valores controlados.
-
-
-
-\### Regla que NO se resuelve sólo con constraint simple
-
-
-
-El estado de una visita y su transición entre ingreso y salida requiere lógica de negocio.
+\- Las fechas utilizan TIMESTAMPTZ porque representan eventos con hora.
 
 
 
@@ -340,7 +342,7 @@ El estado de una visita y su transición entre ingreso y salida requiere lógica
 
 
 
-Propósito: Representar incidencias reportadas en una unidad por una persona.
+Propósito: Registrar problemas que requieren atención dentro del condominio.
 
 
 
@@ -348,17 +350,23 @@ Propósito: Representar incidencias reportadas en una unidad por una persona.
 
 |---|---|---|---|---|
 
-| incidencia\_id | BIGINT | NO | PK | Diseño |
+| incidencia\_id | BIGINT | NO | PK | Modelo relacional |
 
 | unidad\_id | BIGINT | NO | FK → unidad.unidad\_id | Modelo relacional |
 
 | persona\_id | BIGINT | NO | FK → persona.persona\_id | Modelo relacional |
 
+| titulo | VARCHAR(150) | NO | — | Modelo relacional |
+
 | descripcion | TEXT | NO | — | Modelo relacional |
 
 | fecha\_reporte | TIMESTAMPTZ | NO | — | Modelo relacional |
 
+| prioridad | VARCHAR(30) | NO | CHECK / dominio controlado | Modelo relacional |
+
 | estado | VARCHAR(30) | NO | CHECK / dominio controlado | Modelo relacional |
+
+| fecha\_resolucion | TIMESTAMPTZ | SÍ | — | Modelo relacional |
 
 
 
@@ -366,15 +374,19 @@ Propósito: Representar incidencias reportadas en una unidad por una persona.
 
 
 
-\- `incidencia\_id` será la identificación técnica.
+\- `incidencia\_id` es la PK técnica.
 
-\- `unidad\_id` y `persona\_id` serán obligatorios.
+\- `unidad\_id` y `persona\_id` son obligatorios.
 
-\- `descripcion` será TEXT porque puede contener una explicación extensa.
+\- `titulo` utiliza VARCHAR porque es un texto corto.
 
-\- `fecha\_reporte` será TIMESTAMPTZ porque registra el momento del reporte.
+\- `descripcion` utiliza TEXT por su extensión variable.
 
-\- `estado` tendrá valores controlados.
+\- `fecha\_reporte` utiliza TIMESTAMPTZ.
+
+\- `fecha\_resolucion` puede ser NULL mientras la incidencia no esté resuelta.
+
+\- `prioridad` y `estado` utilizan valores controlados.
 
 
 
@@ -382,7 +394,7 @@ Propósito: Representar incidencias reportadas en una unidad por una persona.
 
 
 
-Las transiciones entre estados de una incidencia dependen del proceso de atención y requieren lógica de negocio.
+Las transiciones entre estados de una incidencia dependen del proceso de atención.
 
 
 
@@ -394,7 +406,7 @@ Las transiciones entre estados de una incidencia dependen del proceso de atenci�
 
 
 
-Propósito: Representar las tareas de mantenimiento asociadas a una incidencia.
+Propósito: Registrar las tareas de mantenimiento asociadas a una incidencia.
 
 
 
@@ -402,7 +414,7 @@ Propósito: Representar las tareas de mantenimiento asociadas a una incidencia.
 
 |---|---|---|---|---|
 
-| tarea\_mantenimiento\_id | BIGINT | NO | PK | Diseño |
+| tarea\_mantenimiento\_id | BIGINT | NO | PK | Modelo relacional |
 
 | incidencia\_id | BIGINT | NO | FK → incidencia.incidencia\_id | Modelo relacional |
 
@@ -412,6 +424,8 @@ Propósito: Representar las tareas de mantenimiento asociadas a una incidencia.
 
 | fecha\_finalizacion | TIMESTAMPTZ | SÍ | CHECK finalización > asignación | Modelo relacional |
 
+| prioridad | VARCHAR(30) | NO | CHECK / dominio controlado | Modelo relacional |
+
 | estado | VARCHAR(30) | NO | CHECK / dominio controlado | Modelo relacional |
 
 
@@ -420,19 +434,17 @@ Propósito: Representar las tareas de mantenimiento asociadas a una incidencia.
 
 
 
-\- `tarea\_mantenimiento\_id` será la identificación técnica.
+\- `tarea\_mantenimiento\_id` es la PK técnica.
 
-\- `incidencia\_id` será obligatorio y funcionará como FK.
+\- `incidencia\_id` es obligatorio.
 
-\- `descripcion` será TEXT.
+\- `descripcion` utiliza TEXT.
 
-\- `fecha\_asignacion` será obligatoria.
+\- `fecha\_asignacion` es obligatoria.
 
-\- `fecha\_finalizacion` podrá ser NULL mientras la tarea no haya finalizado.
+\- `fecha\_finalizacion` puede ser NULL mientras la tarea esté pendiente.
 
-\- Las fechas utilizarán TIMESTAMPTZ.
-
-\- `estado` tendrá valores controlados.
+\- `prioridad` y `estado` utilizan valores controlados.
 
 
 
@@ -440,7 +452,7 @@ Propósito: Representar las tareas de mantenimiento asociadas a una incidencia.
 
 
 
-La transición de una tarea entre sus estados depende del proceso de mantenimiento y requiere lógica de negocio.
+Las transiciones de estado de la tarea dependen del proceso de mantenimiento.
 
 
 
@@ -448,7 +460,7 @@ La transición de una tarea entre sus estados depende del proceso de mantenimien
 
 
 
-\## 10. Resumen de restricciones
+\## 10. Restricciones principales
 
 
 
@@ -456,7 +468,7 @@ La transición de una tarea entre sus estados depende del proceso de mantenimien
 
 
 
-Cada tabla tendrá una clave primaria BIGINT autogenerada.
+Todas las tablas utilizan una PK BIGINT autogenerada.
 
 
 
@@ -488,25 +500,13 @@ Cada tabla tendrá una clave primaria BIGINT autogenerada.
 
 \- `unidad.numero\_unidad`
 
-\- `persona.correo\_electronico`
+\- `persona.correo`
 
 \- `area\_comun.nombre`
 
 
 
-\### NOT NULL
-
-
-
-Los atributos marcados como obligatorios en el modelo lógico serán NOT NULL.
-
-
-
-\### CHECK
-
-
-
-Se consideran candidatos a CHECK las reglas que pueden evaluarse dentro de una misma fila:
+\### CHECK candidatos
 
 
 
@@ -520,43 +520,31 @@ Se consideran candidatos a CHECK las reglas que pueden evaluarse dentro de una m
 
 
 
-\### Reglas transaccionales
-
-
-
-El solapamiento de reservas para una misma área común no se resolverá con un CHECK simple porque requiere comparar diferentes filas.
-
-
-
 \---
 
 
 
-\## 11. Tipos de fecha y hora
+\## 11. Reglas transaccionales
 
 
 
-CondoFlow utilizará `TIMESTAMPTZ` para los eventos en los que importa conservar fecha y hora:
+Las siguientes reglas no se resuelven con un CHECK simple:
 
 
 
-\- `reserva.fecha\_inicio`
+\- Evitar reservas solapadas para una misma área común.
 
-\- `reserva.fecha\_fin`
+\- Controlar las transiciones de estado de las reservas.
 
-\- `visita.fecha\_ingreso`
+\- Controlar las transiciones de estado de las visitas.
 
-\- `visita.fecha\_salida`
+\- Controlar las transiciones de estado de las incidencias.
 
-\- `incidencia.fecha\_reporte`
-
-\- `tarea\_mantenimiento.fecha\_asignacion`
-
-\- `tarea\_mantenimiento.fecha\_finalizacion`
+\- Controlar las transiciones de estado de las tareas de mantenimiento.
 
 
 
-No se utilizan tipos de dinero porque las tablas definidas en este modelo no contienen importes monetarios.
+Estas reglas requerirán lógica transaccional o validación en backend.
 
 
 
@@ -568,11 +556,11 @@ No se utilizan tipos de dinero porque las tablas definidas en este modelo no con
 
 
 
-No se agregan `created\_at`, `updated\_at`, `created\_by` ni `updated\_by` en esta versión porque no forman parte del modelo lógico definido.
+No se agregan campos de auditoría adicionales en esta versión porque no están definidos en el modelo lógico actual.
 
 
 
-Estas columnas podrán evaluarse posteriormente si las reglas de negocio o los requisitos de auditoría del sistema las justifican.
+La necesidad de `created\_at`, `updated\_at`, `created\_by` o `updated\_by` podrá evaluarse posteriormente si los requisitos del proyecto lo justifican.
 
 
 
@@ -580,11 +568,7 @@ Estas columnas podrán evaluarse posteriormente si las reglas de negocio o los r
 
 
 
-\## 13. Dependencias principales
-
-
-
-El orden de dependencia para la creación de las tablas es:
+\## 13. Orden de dependencias
 
 
 
@@ -594,13 +578,17 @@ El orden de dependencia para la creación de las tablas es:
 
 3\. `area\_comun`
 
-4\. `residencia` depende de `persona` y `unidad`
+4\. `residencia`
 
-5\. `reserva` depende de `area\_comun` y `persona`
+5\. `reserva`
 
-6\. `visita` depende de `unidad`
+6\. `visita`
 
-7\. `incidencia` depende de `unidad` y `persona`
+7\. `incidencia`
 
-8\. `tarea\_mantenimiento` depende de `incidencia`
+8\. `tarea\_mantenimiento`
+
+
+
+Las tablas que contienen claves foráneas se crearán después de las tablas que referencian.
 
