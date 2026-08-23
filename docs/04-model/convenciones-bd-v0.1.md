@@ -2,51 +2,201 @@
 
 
 
-\## Nombres
+\## 1. Nombres
 
 
 
-\- Tablas: minúsculas y snake\_case.
+\- Las tablas se nombran en `snake\_case` y en singular.
 
-\- Columnas: minúsculas y snake\_case.
+\- Las columnas se nombran en `snake\_case`.
 
-\- PK: `<tabla>\_id`.
+\- Las claves primarias utilizan el formato `<tabla>\_id`.
 
-\- FK: conservar el nombre de la entidad referenciada seguido de `\_id`.
+\- Las claves foráneas conservan el mismo nombre de la clave primaria que referencian.
 
-\- UNIQUE: prefijo `uq\_` seguido de tabla y columna.
+\- Las restricciones de unicidad se utilizan para datos que no deben repetirse.
 
-\- CHECK: prefijo `ck\_` seguido de tabla y regla.
+\- Los índices utilizan el formato `idx\_<tabla>\_<columna>`.
 
-\- Índices: prefijo `ix\_` seguido de tabla y columna.
-
-
-
-\## Tipos candidatos
+\- Las restricciones CHECK se utilizan para validar reglas simples de los datos.
 
 
 
-\- Identificador técnico: BIGINT autogenerado.
-
-\- Texto corto: VARCHAR(n).
-
-\- Texto amplio: TEXT.
-
-\- Importes/decimales exactos: NUMERIC(p,s).
-
-\- Fecha: DATE.
-
-\- Instante con hora: TIMESTAMPTZ.
-
-\- Booleanos: BOOLEAN.
-
-\- Estados: VARCHAR(n) con valores controlados mediante restricciones.
+\## 2. Tablas del proyecto
 
 
 
-\## Regla de equipo
+Las tablas principales de CondoFlow son:
 
 
 
-Toda excepción a estas convenciones debe estar justificada por una regla de negocio o requisito del proyecto.
+\- `unidad`
+
+\- `persona`
+
+\- `residencia`
+
+\- `area\_comun`
+
+\- `reserva`
+
+\- `visita`
+
+\- `incidencia`
+
+\- `tarea\_mantenimiento`
+
+
+
+\## 3. Claves primarias
+
+
+
+Las claves primarias siguen el formato `<tabla>\_id`:
+
+
+
+\- `unidad.unidad\_id`
+
+\- `persona.persona\_id`
+
+\- `residencia.residencia\_id`
+
+\- `area\_comun.area\_comun\_id`
+
+\- `reserva.reserva\_id`
+
+\- `visita.visita\_id`
+
+\- `incidencia.incidencia\_id`
+
+\- `tarea\_mantenimiento.tarea\_mantenimiento\_id`
+
+
+
+Las claves primarias deben ser únicas y no admitir valores nulos.
+
+
+
+\## 4. Claves foráneas
+
+
+
+Las relaciones entre las tablas utilizan claves foráneas:
+
+
+
+\- `residencia.persona\_id` referencia `persona.persona\_id`.
+
+\- `residencia.unidad\_id` referencia `unidad.unidad\_id`.
+
+\- `reserva.area\_comun\_id` referencia `area\_comun.area\_comun\_id`.
+
+\- `reserva.persona\_id` referencia `persona.persona\_id`.
+
+\- `visita.unidad\_id` referencia `unidad.unidad\_id`.
+
+\- `incidencia.unidad\_id` referencia `unidad.unidad\_id`.
+
+\- `incidencia.persona\_id` referencia `persona.persona\_id`.
+
+\- `tarea\_mantenimiento.incidencia\_id` referencia `incidencia.incidencia\_id`.
+
+
+
+Las claves foráneas obligatorias no deben admitir valores nulos.
+
+
+
+\## 5. Restricciones de unicidad
+
+
+
+Se establecen las siguientes restricciones UNIQUE:
+
+
+
+\- `persona.correo\_electronico`
+
+\- `unidad.numero\_unidad`
+
+\- `area\_comun.nombre`
+
+
+
+Estas restricciones evitan duplicar información que debe ser única dentro del condominio.
+
+
+
+\## 6. Tipos de datos candidatos
+
+
+
+\- Identificadores: `BIGINT` autogenerado.
+
+\- Nombres, apellidos y otros textos cortos: `VARCHAR(n)`.
+
+\- Descripciones: `TEXT`.
+
+\- Capacidad de áreas comunes: tipo numérico entero.
+
+\- Fechas: `DATE`.
+
+\- Fechas y horas de ingreso, salida, reporte y reservas: `TIMESTAMPTZ`.
+
+\- Estados: `VARCHAR` con valores controlados.
+
+
+
+\## 7. Índices candidatos
+
+
+
+Además de las claves primarias y restricciones UNIQUE, podrán utilizarse índices para las columnas utilizadas frecuentemente en búsquedas y relaciones:
+
+
+
+\- `idx\_residencia\_persona\_id`
+
+\- `idx\_residencia\_unidad\_id`
+
+\- `idx\_reserva\_area\_comun\_id`
+
+\- `idx\_reserva\_persona\_id`
+
+\- `idx\_visita\_unidad\_id`
+
+\- `idx\_incidencia\_unidad\_id`
+
+\- `idx\_incidencia\_persona\_id`
+
+\- `idx\_tarea\_mantenimiento\_incidencia\_id`
+
+
+
+\## 8. Reglas de integridad
+
+
+
+Las restricciones de la base de datos deben mantener la consistencia definida en el modelo relacional y el DER lógico.
+
+
+
+\- No debe existir una clave foránea que apunte a un registro inexistente.
+
+\- Los campos obligatorios no deben admitir valores nulos.
+
+\- Los datos únicos no deben repetirse.
+
+\- Los estados deben utilizar valores permitidos.
+
+\- Las fechas deben respetar las reglas temporales definidas para cada entidad.
+
+
+
+\## 9. Regla para excepciones
+
+
+
+Cualquier excepción a estas convenciones deberá justificarse según las reglas de negocio de CondoFlow y el modelo de datos aprobado.
 
