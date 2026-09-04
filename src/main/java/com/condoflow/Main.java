@@ -1,42 +1,69 @@
 package com.condoflow;
 
+import com.condoflow.person.application.PersonaService;
 import com.condoflow.person.domain.Persona;
-import com.condoflow.residence.domain.Residencia;
+import com.condoflow.person.infrastructure.memory.PersonaRepositoryEnMemoria;
 
 public class Main {
 
     public static void main(String[] args) {
 
-        Persona persona = new Persona(
+        // Repositorio en memoria
+        var repository = new PersonaRepositoryEnMemoria();
+
+        // Servicio
+        var service = new PersonaService(repository);
+
+        // Registrar primera persona
+        Persona persona1 = new Persona(
                 1L,
                 "Juan",
                 "Perez",
                 "juan.perez@gmail.com"
         );
 
-        Residencia residencia1 = new Residencia(
-                1L,
-                1L,
-                101L
-        );
+        service.registrar(persona1);
 
-        Residencia residencia2 = new Residencia(
+        // Registrar segunda persona
+        Persona persona2 = new Persona(
                 2L,
-                1L,
-                102L
+                "Maria",
+                "Gomez",
+                "maria.gomez@gmail.com"
         );
 
-        persona.agregarResidencia(residencia1);
-        persona.agregarResidencia(residencia2);
+        service.registrar(persona2);
 
-        System.out.println("Persona: "
-                + persona.getNombre() + " "
-                + persona.getApellido());
+        // Listar personas
+        System.out.println("Cantidad de personas: "
+                + service.listar().size());
 
-        System.out.println("Correo: "
-                + persona.getCorreoElectronico());
+        // Buscar persona existente
+        System.out.println("Persona encontrada: "
+                + service.obtener(1L).getNombre());
 
-        System.out.println("Cantidad de residencias: "
-                + persona.getResidencias().size());
+        // Buscar persona inexistente
+        try {
+            service.obtener(999L);
+        } catch (RuntimeException ex) {
+            System.out.println("ERROR CONTROLADO: "
+                    + ex.getMessage());
+        }
+
+        // Intentar registrar correo duplicado
+        try {
+            Persona personaDuplicada = new Persona(
+                    3L,
+                    "Pedro",
+                    "Lopez",
+                    "juan.perez@gmail.com"
+            );
+
+            service.registrar(personaDuplicada);
+
+        } catch (RuntimeException ex) {
+            System.out.println("ERROR CONTROLADO: "
+                    + ex.getMessage());
+        }
     }
 }
