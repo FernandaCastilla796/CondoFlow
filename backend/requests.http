@@ -1,0 +1,7 @@
+### Health
+GET http://localhost:8080/api/health
+
+###
+
+### Persona demo
+GET http://localhost:8080/api/personas/demo
