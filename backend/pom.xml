@@ -37,6 +37,13 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Documentación interactiva de la API: /swagger-ui.html (springdoc 3.x es la línea para Spring Boot 4) -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+
         <!-- Migraciones versionadas: aplica db/migration/V*.sql al arrancar -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
