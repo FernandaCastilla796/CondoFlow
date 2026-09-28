@@ -9,7 +9,7 @@ Las claves primarias serán independientes de los datos visibles del negocio.
 Las claves naturales que requieren UNIQUE son:
 
 - `unidad.numero_unidad`
-- `persona.correo`
+- `persona.correo_electronico`
 - `area_comun.nombre`
 
 ---
@@ -49,13 +49,13 @@ Propósito: Representar a las personas relacionadas con el condominio.
 | apellido | VARCHAR(100) | NO | — | Modelo relacional |
 | documento | VARCHAR(50) | NO | — | Modelo relacional |
 | telefono | VARCHAR(30) | NO | — | Modelo relacional |
-| correo | VARCHAR(150) | NO | UNIQUE | Modelo relacional |
-| estado | VARCHAR(30) | NO | CHECK / dominio controlado | Modelo relacional |
+| correo_electronico | VARCHAR(150) | NO | UNIQUE | Modelo relacional |
+| estado | VARCHAR(30) | NO | CHECK (`ACTIVO`, `INACTIVO`) | Modelo relacional |
 
 ### Decisiones
 
 - `persona_id` es la PK técnica.
-- `correo` debe ser único.
+- `correo_electronico` debe ser único; se guarda en minúsculas.
 - `documento` se conserva como dato de identificación de la persona.
 - `telefono` se maneja como texto porque no se utiliza para operaciones matemáticas.
 - `estado` utiliza valores controlados.
@@ -71,10 +71,10 @@ Propósito: Relacionar una persona con una unidad del condominio.
 | residencia_id | BIGINT | NO | PK | Modelo relacional |
 | persona_id | BIGINT | NO | FK → persona.persona_id | Modelo relacional |
 | unidad_id | BIGINT | NO | FK → unidad.unidad_id | Modelo relacional |
-| tipo_residencia | VARCHAR(50) | NO | — | Modelo relacional |
+| tipo_residencia | VARCHAR(50) | NO | CHECK (`PROPIETARIO`, `INQUILINO`) | Modelo relacional |
 | fecha_inicio | DATE | NO | — | Modelo relacional |
-| fecha_fin | DATE | SÍ | — | Modelo relacional |
-| estado | VARCHAR(30) | NO | CHECK / dominio controlado | Modelo relacional |
+| fecha_fin | DATE | SÍ | CHECK `fecha_fin >= fecha_inicio` | Modelo relacional |
+| estado | VARCHAR(30) | NO | CHECK (`VIGENTE`, `FINALIZADA`) | Modelo relacional |
 
 ### Decisiones
 
@@ -87,6 +87,8 @@ Propósito: Relacionar una persona con una unidad del condominio.
 ### Regla que NO se resuelve sólo con constraint simple
 
 El control de residencia vigente e histórica depende del estado y de la combinación de registros existentes.
+
+Desde V3 se resuelve en dos niveles: el índice UNIQUE parcial `uq_residencia_vigente_persona_unidad` impide dos residencias VIGENTES de la misma persona en la misma unidad, y el caso de uso del backend valida la regla antes de guardar para devolver un error claro (409).
 
 ---
 
@@ -249,7 +251,7 @@ Todas las tablas utilizan una PK BIGINT autogenerada.
 ### UNIQUE
 
 - `unidad.numero_unidad`
-- `persona.correo`
+- `persona.correo_electronico`
 - `area_comun.nombre`
 
 ### CHECK candidatos

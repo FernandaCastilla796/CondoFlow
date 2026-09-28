@@ -9,31 +9,31 @@ La migración V1 debe implementar el núcleo definido en el modelo físico v0.1 
 ## Tablas incluidas y orden
 
 1. `unidad`
-&#x20;  - No depende de otras tablas del núcleo.
+   - No depende de otras tablas del núcleo.
 
 2. `persona`
-&#x20;  - No depende de otras tablas del núcleo.
+   - No depende de otras tablas del núcleo.
 
 3. `area_comun`
-&#x20;  - No depende de otras tablas del núcleo.
+   - No depende de otras tablas del núcleo.
 
 4. `residencia`
-&#x20;  - Depende de `persona`.
-&#x20;  - Depende de `unidad`.
+   - Depende de `persona`.
+   - Depende de `unidad`.
 
 5. `reserva`
-&#x20;  - Depende de `area_comun`.
-&#x20;  - Depende de `persona`.
+   - Depende de `area_comun`.
+   - Depende de `persona`.
 
 6. `visita`
-&#x20;  - Depende de `unidad`.
+   - Depende de `unidad`.
 
 7. `incidencia`
-&#x20;  - Depende de `unidad`.
-&#x20;  - Depende de `persona`.
+   - Depende de `unidad`.
+   - Depende de `persona`.
 
 8. `tarea_mantenimiento`
-&#x20;  - Depende de `incidencia`.
+   - Depende de `incidencia`.
 
 ## Restricciones previstas
 
@@ -41,14 +41,14 @@ La migración V1 debe implementar el núcleo definido en el modelo físico v0.1 
 - FK: se crearán las claves foráneas definidas en el modelo físico.
 - NOT NULL: se aplicará a los atributos definidos como obligatorios.
 - UNIQUE:
-&#x20; - `unidad.numero_unidad`
-&#x20; - `persona.correo_electronico`
-&#x20; - `area_comun.nombre`
+  - `unidad.numero_unidad`
+  - `persona.correo_electronico`
+  - `area_comun.nombre`
 - CHECK:
-&#x20; - `area_comun.capacidad > 0`
-&#x20; - `reserva.fecha_fin > reserva.fecha_inicio`
-&#x20; - `visita.fecha_salida > visita.fecha_ingreso`, cuando exista.
-&#x20; - `tarea_mantenimiento.fecha_finalizacion > tarea_mantenimiento.fecha_asignacion`, cuando exista.
+  - `area_comun.capacidad > 0`
+  - `reserva.fecha_fin > reserva.fecha_inicio`
+  - `visita.fecha_salida > visita.fecha_ingreso`, cuando exista.
+  - `tarea_mantenimiento.fecha_finalizacion > tarea_mantenimiento.fecha_asignacion`, cuando exista.
 - Estados: se mantendrán como valores controlados.
 
 ## Reglas que requerirán lógica posterior
@@ -79,3 +79,39 @@ La migración V1 estará preparada cuando:
 - Las restricciones NOT NULL, UNIQUE y CHECK estén identificadas.
 - Las reglas transaccionales estén diferenciadas de las restricciones simples.
 - No sea necesario tomar decisiones importantes adicionales para escribir el DDL de V1.
+
+## Migraciones ejecutadas
+
+| Versión | Archivo | Contenido |
+|---|---|---|
+| V1 | `V1__init_core.sql` | Núcleo inicial: `unidad`, `persona`, `area_comun`, `residencia`, `reserva`. |
+| V2 | `V2__seed_core.sql` | Dataset mínimo de la Clase 07. |
+| V3 | `V3__alinear_modelo_fisico.sql` | Completa las columnas y CHECK que V1 dejó pendientes respecto del modelo físico. |
+
+`visita`, `incidencia` y `tarea_mantenimiento` quedan para migraciones posteriores, cuando se implementen sus módulos.
+
+### Por qué V3 y no editar V1
+
+V1 y V2 ya se ejecutaron en las bases de los integrantes. Flyway guarda un checksum de cada migración aplicada: si se edita V1, la aplicación deja de arrancar en esas bases. La regla es **no modificar una migración ya aplicada; agregar una nueva**.
+
+### Cambios de V3
+
+- `persona`: agrega `documento`, `telefono` y `estado` (`ACTIVO`, `INACTIVO`), más CHECK de nombre no vacío y formato básico de correo.
+- `residencia`: agrega `tipo_residencia` (`PROPIETARIO`, `INQUILINO`), `fecha_inicio`, `fecha_fin` y `estado` (`VIGENTE`, `FINALIZADA`) para cumplir RN-01 (vigencia temporal).
+  - `ck_residencia_fechas`: `fecha_fin >= fecha_inicio`.
+  - `ck_residencia_estado_fecha_fin`: una residencia VIGENTE no tiene `fecha_fin`; una FINALIZADA sí.
+  - `uq_residencia_vigente_persona_unidad`: índice UNIQUE **parcial** que impide dos residencias VIGENTES de la misma persona en la misma unidad, pero permite conservar el historial.
+- `unidad`: CHECK de estado (`ACTIVA`, `INACTIVA`).
+- `area_comun`: agrega `horario_disponible`; CHECK de estado (`ACTIVA`, `INACTIVA`, `EN_MANTENIMIENTO`).
+- `reserva`: agrega `observaciones`; CHECK de estado (`PENDIENTE`, `CONFIRMADA`, `CANCELADA`, `FINALIZADA`).
+- Índices sobre las FK de `residencia` y `reserva`, usadas en los JOIN de la Clase 08.
+
+### Violaciones de integridad probadas
+
+| Intento | Constraint que lo rechaza |
+|---|---|
+| Segunda residencia VIGENTE de la misma persona en la misma unidad | `uq_residencia_vigente_persona_unidad` |
+| `tipo_residencia = 'ALQUILER'` | `ck_residencia_tipo` |
+| Finalizar con `fecha_fin` anterior a `fecha_inicio` | `ck_residencia_fechas` |
+| Marcar FINALIZADA sin `fecha_fin` | `ck_residencia_estado_fecha_fin` |
+| `persona.estado = 'BORRADO'` | `ck_persona_estado` |

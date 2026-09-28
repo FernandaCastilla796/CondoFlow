@@ -23,7 +23,11 @@ application-local.properties
 *.iws
 *.iml
 *.ipr
-out/
+# Carpeta de compilación de IntelliJ sólo en la raíz de cada proyecto.
+# (No usar "out/" a secas: ignoraría los packages adapter/out de la arquitectura hexagonal.)
+/out/
+/backend/out/
+/backend-lab/out/
 
 ### Eclipse ###
 .apt_generated
