@@ -20,7 +20,7 @@ Estados usados en las tablas: ✅ implementado · 🟡 parcial · ⬜ pendiente 
 | ID | Requisito (ficha PA-04) | Estado | Evidencia / endpoint |
 |---|---|---|---|
 | RF-01 | Autenticar usuarios y resolver permisos según el rol vigente | ⬜ | Parcial 2 |
-| RF-02 | Consultar listados con filtros y mensajes claros cuando no hay resultados | 🟡 | `GET /api/personas?buscar=` |
+| RF-02 | Consultar listados con filtros y mensajes claros cuando no hay resultados | 🟡 | `GET /api/personas?filtro=` |
 | RF-03 | Validar datos obligatorios en cliente y servidor; el backend es la autoridad final | 🟡 | Bean Validation + `ApiError.fieldErrors` (backend). Validación en cliente: pendiente |
 | RF-04 | Registrar fecha/usuario en operaciones que cambian el estado de un proceso | 🟡 | `residencia.fecha_inicio` / `fecha_fin`. Usuario: pendiente (requiere RF-01) |
 | RF-05 | Módulo de unidades y residentes | 🟡 | `/api/personas`, `/api/residencias`, `GET /api/unidades` |
@@ -63,7 +63,7 @@ Estados usados en las tablas: ✅ implementado · 🟡 parcial · ⬜ pendiente 
 
 | ID | Regla (ficha PA-04) | Estado | Dónde se implementa |
 |---|---|---|---|
-| RN-01 | Una unidad puede tener varios residentes con vigencia temporal | ✅ | `residencia.fecha_inicio/fecha_fin/estado`; `Residencia.finalizar()`; UNIQUE parcial `uq_residencia_vigente_persona_unidad`; `ResidenciaService` → 409 si ya existe una vigente |
+| RN-01 | Una unidad puede tener varios residentes con vigencia temporal | 🟡 | `residencia.fecha_inicio/fecha_fin/estado` (V3); UNIQUE parcial `uq_residencia_vigente_persona_unidad`; `ResidenciaService` → 409 si ya existe una vigente. Pendiente: caso de uso para cerrar la vigencia |
 | RN-02 | Las reservas deben respetar aforo, horario y no solapamiento | ⬜ | CHECK `fecha_fin > fecha_inicio` ya existe; aforo y solapamiento en el caso de uso de reservas |
 | RN-03 | Estados de incidencia: REPORTADA, ASIGNADA, EN_PROCESO, RESUELTA, CERRADA, RECHAZADA | ⬜ | |
 | RN-04 | Una incidencia registra categoría, prioridad, descripción, unidad/área y responsable | ⬜ | |
@@ -78,13 +78,13 @@ Reglas internas agregadas por el equipo:
 |---|---|---|
 | RI-01 | El correo electrónico identifica a una sola persona (sin distinguir mayúsculas) | `uq_persona_correo` + `PersonaService` → 409 |
 | RI-02 | Una residencia sólo se registra si la persona y la unidad existen | FK + `ResidenciaService` → 404 |
-| RI-03 | Sólo una residencia VIGENTE puede finalizarse, con `fecha_fin >= fecha_inicio` | `ck_residencia_fechas`, `ck_residencia_estado_fecha_fin` + dominio → 400 / 409 |
+| RI-03 | Una residencia VIGENTE no tiene `fecha_fin`; una FINALIZADA sí, con `fecha_fin >= fecha_inicio` | `ck_residencia_fechas`, `ck_residencia_estado_fecha_fin` (V3) |
 
 ## 5. Mapa de casos de uso
 
 | Actor | Casos de uso | Estado |
 |---|---|---|
-| Administrador | Registrar persona · Consultar/buscar personas · Registrar residencia · Finalizar residencia · Consultar unidades | ✅ |
+| Administrador | Registrar persona · Consultar/filtrar personas · Registrar residencia · Consultar residencias de una persona · Consultar unidades | ✅ |
 | Administrador | Gestionar unidades · Clasificar/asignar incidencia · Publicar comunicado · Ver panel operativo | ⬜ |
 | Residente | Reportar incidencia con evidencia · Consultar avance · Reservar área común · Registrar visita esperada · Ver comunicados | ⬜ |
 | Portería/seguridad | Registrar visita · Validar visita autorizada | ⬜ |

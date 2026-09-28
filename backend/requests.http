@@ -1,8 +1,12 @@
 # Pruebas manuales de la API de CondoFlow (IntelliJ HTTP Client).
 # Arrancar el backend y ejecutar cada petición con el botón ▶.
 
-### Health
+### Health (Capítulo 03)
 GET http://localhost:8080/api/health
+Accept: application/json
+
+### Demo entidad padre (Capítulo 03)
+GET http://localhost:8080/api/personas/demo
 Accept: application/json
 
 ##############################################################
@@ -49,7 +53,7 @@ Content-Type: application/json
 GET http://localhost:8080/api/personas
 
 ### Listar con filtro -> 200
-GET http://localhost:8080/api/personas?buscar=lopez
+GET http://localhost:8080/api/personas?filtro=lopez
 
 ### Buscar persona existente -> 200
 GET http://localhost:8080/api/personas/1
@@ -132,18 +136,5 @@ GET http://localhost:8080/api/residencias/999
 ### Residencias de una persona -> 200
 GET http://localhost:8080/api/residencias/persona/2
 
-### Finalizar residencia (RN-01) -> 200
-PATCH http://localhost:8080/api/residencias/1/finalizar
-Content-Type: application/json
-
-{
-  "fechaFin": "2026-12-31"
-}
-
-### Finalizar otra vez -> 409
-PATCH http://localhost:8080/api/residencias/1/finalizar
-Content-Type: application/json
-
-{
-  "fechaFin": "2027-01-31"
-}
+### Residencias de una persona inexistente -> 404
+GET http://localhost:8080/api/residencias/persona/999

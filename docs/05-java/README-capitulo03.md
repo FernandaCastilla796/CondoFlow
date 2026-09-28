@@ -22,7 +22,9 @@ Spring Initializr con Maven, Java 21, packaging Jar y dependencias **Spring Web*
 | Verbo | Ruta | Respuesta |
 |---|---|---|
 | GET | `/api/health` | `200` con `status`, `application`, `stage`, `timestamp` |
-| GET | `/api/personas/demo` | `200` con un `PersonaDemoResponse` fijo (reemplazado en el Capítulo 04) |
+| GET | `/api/personas/demo` | `200` con un `PersonaDemoResponse` fijo, sin base de datos |
+
+El endpoint demo se conserva: `PersonaDemoController` (en `person/infrastructure/adapter/in/web`) recibe por constructor `PersonaDemoService` (en `person/application/service`), que devuelve el record `PersonaDemoResponse`.
 
 Pruebas en [`backend/requests.http`](../../backend/requests.http).
 
@@ -56,5 +58,6 @@ Map → JSON, HTTP 200
 
 ## Evidencia
 
-- `./mvnw test` levanta el contexto de Spring correctamente (`CondoflowBackendApplicationTests`).
-- `GET /api/health` → `200 OK`.
+- `GET /api/health` → `200 OK` (`HealthControllerTest`).
+- `GET /api/personas/demo` → `200 OK` (`PersonaDemoControllerTest`).
+- Ambas peticiones están en [`backend/requests.http`](../../backend/requests.http).

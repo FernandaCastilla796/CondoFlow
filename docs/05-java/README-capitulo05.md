@@ -4,12 +4,28 @@
 
 | Dato | Valor |
 |---|---|
+| Nombre del proyecto | CondoFlow (`condoflow-backend`) |
 | Base de datos | `condoflow` |
+| Usuario | `condoflow_admin` (creado como indica la Guía DataGrip) |
 | Schema | `condoflow` |
 | Tabla padre | `persona` (PK `persona_id`, BIGINT IDENTITY) |
 | Tabla dependiente | `residencia` |
 | FK hacia la tabla padre | `residencia.persona_id → persona.persona_id` |
 | UNIQUE importante | `uq_persona_correo (correo_electronico)` |
+
+## Comprobación de la base desde DataGrip
+
+```sql
+SELECT current_database() AS base_actual,
+       current_schema()   AS schema_actual,
+       current_user       AS usuario_actual;
+```
+
+```text
+ base_actual | schema_actual | usuario_actual
+-------------+---------------+-----------------
+ condoflow   | condoflow     | condoflow_admin
+```
 
 ## Conceptos
 

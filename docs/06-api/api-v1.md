@@ -32,13 +32,14 @@
 | Método | Ruta | Respuesta |
 |---|---|---|
 | GET | `/api/health` | `200` `{ "status": "OK", "application": "condoflow-backend", "stage": "...", "timestamp": "..." }` |
+| GET | `/api/personas/demo` | `200` persona de ejemplo fija (endpoint demo del Capítulo 03) |
 
 ## Personas — `/api/personas`
 
 | Método | Ruta | Entrada | Salida | Status |
 |---|---|---|---|---|
 | POST | `/api/personas` | `CrearPersonaRequest` | `PersonaResponse` | 201 / 400 / 409 |
-| GET | `/api/personas?buscar=texto` | `buscar` opcional (nombre completo o correo) | `PersonaResponse[]` | 200 |
+| GET | `/api/personas?filtro=texto` | `filtro` opcional (nombre completo o correo) | `PersonaResponse[]` | 200 |
 | GET | `/api/personas/{id}` | — | `PersonaResponse` | 200 / 400 / 404 |
 
 `CrearPersonaRequest`
@@ -69,7 +70,6 @@
 | POST | `/api/residencias` | `CrearResidenciaRequest` | `ResidenciaResponse` | 201 / 400 / 404 / 409 |
 | GET | `/api/residencias/{id}` | — | `ResidenciaResponse` | 200 / 404 |
 | GET | `/api/residencias/persona/{personaId}` | — | `ResidenciaResponse[]` (más recientes primero) | 200 / 404 |
-| PATCH | `/api/residencias/{id}/finalizar` | `{ "fechaFin": "AAAA-MM-DD" }` | `ResidenciaResponse` | 200 / 400 / 404 / 409 |
 
 `CrearResidenciaRequest`
 
@@ -82,8 +82,7 @@
 
 Errores de negocio:
 
+- **404** si la persona o la unidad no existen.
 - **409** si la persona ya tiene una residencia `VIGENTE` en esa unidad.
-- **409** al finalizar una residencia que ya está `FINALIZADA`.
-- **400** si `fechaFin` es anterior a `fechaInicio`.
 
 `ResidenciaResponse`: `residenciaId`, `personaId`, `unidadId`, `tipoResidencia`, `fechaInicio`, `fechaFin` (`null` si está vigente), `estado` (`VIGENTE` \| `FINALIZADA`).
