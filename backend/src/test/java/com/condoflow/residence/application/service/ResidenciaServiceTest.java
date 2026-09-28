@@ -3,13 +3,11 @@ package com.condoflow.residence.application.service;
 import com.condoflow.person.domain.exception.PersonaNoEncontradaException;
 import com.condoflow.person.domain.model.Persona;
 import com.condoflow.person.domain.port.in.ConsultarPersonaUseCase;
-import com.condoflow.residence.domain.exception.ResidenciaNoEncontradaException;
+import com.condoflow.residence.application.command.RegistrarResidenciaCommand;
 import com.condoflow.residence.domain.exception.ResidenciaVigenteDuplicadaException;
-import com.condoflow.residence.domain.exception.ResidenciaYaFinalizadaException;
 import com.condoflow.residence.domain.model.EstadoResidencia;
 import com.condoflow.residence.domain.model.Residencia;
 import com.condoflow.residence.domain.model.TipoResidencia;
-import com.condoflow.residence.domain.port.in.RegistrarResidenciaCommand;
 import com.condoflow.residence.domain.port.out.ResidenciaRepositoryPort;
 import com.condoflow.unit.domain.exception.UnidadNoEncontradaException;
 import com.condoflow.unit.domain.model.EstadoUnidad;
@@ -22,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,7 +30,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/** Reglas de negocio de residencias, probadas sin Spring ni base de datos. */
+/** Reglas del caso de uso de residencias (Capítulos 07 y 08), probadas sin Spring ni base de datos. */
 @ExtendWith(MockitoExtension.class)
 class ResidenciaServiceTest {
 
@@ -56,10 +55,6 @@ class ResidenciaServiceTest {
 
     private static RegistrarResidenciaCommand comando(Long personaId, Long unidadId) {
         return new RegistrarResidenciaCommand(personaId, unidadId, TipoResidencia.INQUILINO, INICIO);
-    }
-
-    private static Residencia vigente() {
-        return new Residencia(5L, 1L, 1L, TipoResidencia.INQUILINO, INICIO, null, EstadoResidencia.VIGENTE);
     }
 
     @Test
@@ -106,39 +101,19 @@ class ResidenciaServiceTest {
     }
 
     @Test
-    void finalizaUnaResidenciaVigente() {
-        when(repositoryPort.buscarPorId(5L)).thenReturn(Optional.of(vigente()));
-        when(repositoryPort.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
+    void listarPorPersonaInexistenteLanzaNoEncontrada() {
+        when(consultarPersona.buscarPorId(99L)).thenReturn(Optional.empty());
 
-        Residencia resultado = service.finalizar(5L, LocalDate.of(2026, 12, 31));
-
-        assertThat(resultado.getEstado()).isEqualTo(EstadoResidencia.FINALIZADA);
-        assertThat(resultado.getFechaFin()).isEqualTo(LocalDate.of(2026, 12, 31));
+        assertThatThrownBy(() -> service.listarPorPersona(99L))
+                .isInstanceOf(PersonaNoEncontradaException.class);
     }
 
     @Test
-    void noPermiteFinalizarDosVeces() {
-        Residencia finalizada = vigente().finalizar(LocalDate.of(2026, 12, 31));
-        when(repositoryPort.buscarPorId(5L)).thenReturn(Optional.of(finalizada));
+    void listarPorPersonaDevuelveSusResidencias() {
+        Residencia r = new Residencia(5L, 1L, 1L, TipoResidencia.INQUILINO, INICIO, null, EstadoResidencia.VIGENTE);
+        when(consultarPersona.buscarPorId(1L)).thenReturn(Optional.of(MARIA));
+        when(repositoryPort.listarPorPersonaId(1L)).thenReturn(List.of(r));
 
-        assertThatThrownBy(() -> service.finalizar(5L, LocalDate.of(2027, 1, 1)))
-                .isInstanceOf(ResidenciaYaFinalizadaException.class);
-    }
-
-    @Test
-    void noPermiteFechaFinAnteriorALaDeInicio() {
-        when(repositoryPort.buscarPorId(5L)).thenReturn(Optional.of(vigente()));
-
-        assertThatThrownBy(() -> service.finalizar(5L, LocalDate.of(2020, 1, 1)))
-                .isInstanceOf(IllegalArgumentException.class);
-        verify(repositoryPort, never()).guardar(any());
-    }
-
-    @Test
-    void finalizarResidenciaInexistenteLanzaNoEncontrada() {
-        when(repositoryPort.buscarPorId(999L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> service.finalizar(999L, LocalDate.of(2026, 12, 31)))
-                .isInstanceOf(ResidenciaNoEncontradaException.class);
+        assertThat(service.listarPorPersona(1L)).containsExactly(r);
     }
 }

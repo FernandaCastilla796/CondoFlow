@@ -10,7 +10,7 @@ services:
     container_name: condoflow-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-condoflow}
-      POSTGRES_USER: ${POSTGRES_USER:-condoflow}
+      POSTGRES_USER: ${POSTGRES_USER:-condoflow_admin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Definir POSTGRES_PASSWORD en .env}
     ports:
       # 5433 en el host para no chocar con un PostgreSQL instalado localmente en 5432.
@@ -31,9 +31,8 @@ services:
         condition: service_healthy
     environment:
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-condoflow}
-      DB_USERNAME: ${POSTGRES_USER:-condoflow}
+      DB_USERNAME: ${POSTGRES_USER:-condoflow_admin}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
     ports:
       - "8080:8080"
 

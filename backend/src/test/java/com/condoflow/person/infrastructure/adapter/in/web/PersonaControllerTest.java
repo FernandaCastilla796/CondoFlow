@@ -123,10 +123,10 @@ class PersonaControllerTest {
     }
 
     @Test
-    void getConParametroBuscarLoEnviaAlCasoDeUso() throws Exception {
+    void getConParametroOpcionalFiltroLoEnviaAlCasoDeUso() throws Exception {
         when(consultar.listar("rojas")).thenReturn(List.of());
 
-        mvc.perform(get("/api/personas").param("buscar", "rojas"))
+        mvc.perform(get("/api/personas").param("filtro", "rojas"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
         verify(consultar).listar("rojas");

@@ -1,28 +1,48 @@
 # Capítulo 08 - Errores profesionales, validaciones y transacciones
 
-## Traducción al proyecto
+## Traducción del ejemplo del profesor
 
 | Profesor | CondoFlow |
 |---|---|
-| Cliente | `Persona` |
-| Vehiculo | `Residencia` |
+| Cliente | `Persona` (entidad padre) |
+| Vehiculo | `Residencia` (entidad dependiente) |
 | clienteId | `personaId` (FK `residencia.persona_id`) |
-| placa UNIQUE | Residencia VIGENTE única por persona y unidad; correo de persona UNIQUE |
-| ClienteNoEncontradoException | `PersonaNoEncontradaException` (también `UnidadNoEncontradaException`, `ResidenciaNoEncontradaException`) |
-| PlacaDuplicadaException | `ResidenciaVigenteDuplicadaException`, `CorreoPersonaDuplicadoException` |
+| placa UNIQUE | Una persona sólo puede tener una residencia VIGENTE por unidad (`uq_residencia_vigente_persona_unidad`) |
+| ClienteNoEncontradoException | `PersonaNoEncontradaException` |
+| PlacaDuplicadaException | `ResidenciaVigenteDuplicadaException` |
+
+## Completado antes de programar
 
 | Elemento | Respuesta del equipo |
 |---|---|
 | Entidad padre | Persona |
 | Entidad dependiente | Residencia |
 | FK | `residencia.persona_id` |
-| Campo UNIQUE o conflicto | Una persona sólo puede tener una residencia VIGENTE por unidad |
-| Regla de validación de formato | `tipoResidencia` ∈ {PROPIETARIO, INQUILINO}; campos obligatorios; formato de correo |
-| Regla de negocio | La persona y la unidad deben existir; no duplicar residencia vigente; sólo se finaliza una residencia VIGENTE con `fechaFin >= fechaInicio` |
+| Campo UNIQUE o conflicto | Residencia VIGENTE duplicada para la misma persona y unidad |
+| Regla de validación de formato | `tipoResidencia` ∈ {PROPIETARIO, INQUILINO}; `personaId`, `unidadId` y `fechaInicio` obligatorios |
+| Regla de negocio | La persona y la unidad deben existir; no se registra una segunda residencia VIGENTE en la misma unidad |
 
-## Contrato único de error
+## Packages agregados
 
-[`ApiError`](../../backend/src/main/java/com/condoflow/shared/web/ApiError.java):
+```text
+com.condoflow
+├── shared
+│   └── web
+│       ├── ApiError.java
+│       └── GlobalExceptionHandler.java
+├── person
+│   └── domain
+│       └── exception        PersonaNoEncontradaException, CorreoPersonaDuplicadoException
+└── residence
+    ├── domain
+    │   └── exception        ResidenciaNoEncontradaException, ResidenciaVigenteDuplicadaException
+    └── application
+        └── command          RegistrarResidenciaCommand
+```
+
+## ApiError
+
+Se usa la estructura exacta de la guía: `timestamp`, `status`, `error`, `message`, `path`, `fieldErrors`.
 
 ```json
 {
@@ -40,70 +60,86 @@
 | Excepción | Status | Motivo |
 |---|---|---|
 | `PersonaNoEncontradaException`, `UnidadNoEncontradaException`, `ResidenciaNoEncontradaException` | 404 | El recurso o un padre referenciado no existe |
-| `CorreoPersonaDuplicadoException`, `ResidenciaVigenteDuplicadaException`, `ResidenciaYaFinalizadaException` | 409 | Conflicto con el estado actual de los datos |
-| `MethodArgumentNotValidException` | 400 | Falla `@Valid` del DTO; incluye `fieldErrors` por campo |
-| `HttpMessageNotReadableException` | 400 | JSON mal formado o valor fuera del enum |
-| `MethodArgumentTypeMismatchException` | 400 | `/api/personas/abc` |
-| `IllegalArgumentException` | 400 | Invariante del dominio (fecha de fin anterior a la de inicio) |
-| `DataIntegrityViolationException` | 409 | Última línea de defensa si PostgreSQL rechaza un UNIQUE/FK/CHECK (por ejemplo, dos peticiones simultáneas). No se devuelve el mensaje interno de la base. |
+| `CorreoPersonaDuplicadoException`, `ResidenciaVigenteDuplicadaException` | 409 | Conflicto con una regla de negocio |
+| `MethodArgumentNotValidException` | 400 | Falla `@Valid` del DTO; `fieldErrors` indica el campo |
+| `HttpMessageNotReadableException` | 400 | JSON mal formado o valor fuera del enum (prueba obligatoria del Capítulo 07) |
+| `MethodArgumentTypeMismatchException` | 400 | Id con formato inválido, por ejemplo `/api/personas/abc` |
+| `IllegalArgumentException` | 400 | El constructor del dominio rechazó un dato |
+| `DataIntegrityViolationException` | 409 | PostgreSQL rechazó un UNIQUE/FK/CHECK; no se devuelve el mensaje interno de la base |
 | `Exception` | 500 | Error no previsto: se registra en el log y el cliente recibe un mensaje genérico |
 
-## Dónde vive cada validación
+## Clasificación de validaciones
 
-| Regla | Tipo | Lugar |
+| Regla del proyecto | Tipo | Lugar |
 |---|---|---|
-| Campo obligatorio (`personaId`, `fechaInicio`...) | Formato | Request DTO (`@NotNull`, `@NotBlank`) |
-| Formato de correo, documento, teléfono | Formato | Request DTO (`@Email`, `@Pattern`) |
-| `tipoResidencia` válido | Formato | Tipo enum en el DTO |
-| Correo duplicado | Negocio | `PersonaService` |
-| Residencia vigente duplicada | Negocio | `ResidenciaService` |
-| Persona o unidad inexistente | Negocio/existencia | `ResidenciaService` (vía `ConsultarPersonaUseCase` / `ConsultarUnidadUseCase`) |
-| Fecha de fin coherente, no finalizar dos veces | Invariante del dominio | `Residencia.finalizar()` |
-| FK / UNIQUE / CHECK | Integridad | PostgreSQL (V1, V3) |
+| `personaId`, `unidadId`, `fechaInicio` obligatorios | Formato | Request DTO (`@NotNull`) |
+| Formato de correo, documento y teléfono de persona | Formato | Request DTO (`@Email`, `@Pattern`) |
+| Correo de persona duplicado | Negocio | `PersonaService` |
+| Residencia VIGENTE duplicada | Negocio | `ResidenciaService` |
+| Persona o unidad inexistente | Negocio/existencia | `ResidenciaService` (vía `ConsultarPersonaUseCase` y `ConsultarUnidadUseCase`) |
+| FK / UNIQUE / CHECK | Integridad | PostgreSQL (V1 y V3) |
 
 ## @Transactional
 
-- `ResidenciaService.registrar`: verifica persona, unidad y residencia vigente, y luego inserta. Es el **límite transaccional** porque todo eso forma una sola operación de negocio: si falla cualquier paso no queda nada a medias.
-- `ResidenciaService.finalizar`: lee, cambia el estado y guarda (*read-modify-write*); debe ser atómico.
-- `PersonaService.registrar`: verificación del correo + INSERT.
-- Las consultas usan `@Transactional(readOnly = true)`.
-- `@Transactional` se pone en la capa de aplicación (el caso de uso), no en el controller ni en el repositorio.
+```java
+@Override
+@Transactional
+public Residencia registrar(RegistrarResidenciaCommand command) {
+    // 1. validar existencia del padre
+    // 2. validar conflicto de negocio
+    // 3. construir dominio
+    // 4. guardar por Port OUT
+}
+```
+
+`ResidenciaService.registrar` es el límite transaccional porque las verificaciones (persona, unidad, residencia vigente) y el INSERT forman una sola operación de negocio: si cualquier paso falla, no queda nada a medias. `PersonaService.registrar` también es transaccional (verificación de correo + INSERT). Las consultas usan `@Transactional(readOnly = true)`.
 
 ## Controller limpio
 
 ```java
 @PostMapping
 public ResponseEntity<ResidenciaResponse> registrar(@Valid @RequestBody CrearResidenciaRequest request) {
-    Residencia creada = registrar.registrar(ResidenciaWebMapper.toCommand(request));
+    Residencia creada = registrarUseCase.registrar(ResidenciaWebMapper.toCommand(request));
     return ResponseEntity.status(HttpStatus.CREATED).body(ResidenciaWebMapper.toResponse(creada));
 }
 ```
 
-Sin `try/catch`. El request se convierte en `RegistrarResidenciaCommand`, que vive junto al Port IN.
+Sin `try/catch`: los errores los traduce `GlobalExceptionHandler`.
 
-## Nuevo endpoint: finalizar residencia (RN-01)
+## Pruebas mínimas obligatorias
 
-`PATCH /api/residencias/{id}/finalizar` con `{"fechaFin": "2026-12-31"}` → 200 / 400 / 404 / 409.
+| Caso | Resultado esperado | Evidencia |
+|---|---|---|
+| Registro válido | 201 Created | `{"residenciaId":3,"personaId":3,"unidadId":1,"tipoResidencia":"INQUILINO",...,"estado":"VIGENTE"}` |
+| Campo inválido | 400 Bad Request | `fieldErrors: {personaId: "La persona es obligatoria", fechaInicio: "La fecha de inicio es obligatoria"}` |
+| Padre inexistente | 404 Not Found | `"No existe una persona con id 999"` |
+| Duplicado o conflicto | 409 Conflict | `"La persona 3 ya tiene una residencia vigente en la unidad 1"` |
+| Error no controlado simulado | 500 Internal Server Error | `"Ocurrió un error interno. Intente nuevamente más tarde."` (`ResidenciaControllerTest`) |
 
-## Evidencia (backend real + PostgreSQL)
+## Consulta en DataGrip: estado final de los datos
 
-| Caso | Resultado |
-|---|---|
-| Registro válido | `201` `{"residenciaId":4,...,"estado":"VIGENTE"}` |
-| Campo inválido | `400` `fieldErrors: {personaId: "La persona es obligatoria", fechaInicio: "La fecha de inicio es obligatoria"}` |
-| Padre inexistente | `404` `"No existe una persona con id 999"` |
-| Duplicado o conflicto | `409` `"La persona 2 ya tiene una residencia vigente en la unidad 1"` |
-| Error no controlado simulado | `500` `"Ocurrió un error interno..."` (`ResidenciaControllerTest`) |
-
-Estado final en PostgreSQL después de los errores (no quedaron filas parciales):
-
-```text
- residencia_id | persona_id | unidad_id | fecha_inicio | fecha_fin  |   estado
----------------+------------+-----------+--------------+------------+------------
-             1 |          1 |         1 | 2026-09-28   |            | VIGENTE
-             2 |          2 |         2 | 2026-09-28   |            | VIGENTE
-             3 |          3 |         1 | 2026-09-01   |            | VIGENTE
-             4 |          2 |         1 | 2026-09-10   | 2026-12-31 | FINALIZADA
+```sql
+SELECT residencia_id, persona_id, unidad_id, tipo_residencia, fecha_inicio, fecha_fin, estado
+FROM condoflow.residencia
+ORDER BY residencia_id;
 ```
 
-Pruebas automáticas: `ResidenciaControllerTest` (9), `ResidenciaServiceTest` (8), `PersonaControllerTest` (9), `PersonaServiceTest` (3).
+```text
+ residencia_id | persona_id | unidad_id | tipo_residencia | fecha_inicio | fecha_fin | estado
+---------------+------------+-----------+-----------------+--------------+-----------+---------
+             1 |          1 |         1 | PROPIETARIO     | 2026-09-28   |           | VIGENTE
+             2 |          2 |         2 | PROPIETARIO     | 2026-09-28   |           | VIGENTE
+             3 |          3 |         1 | INQUILINO       | 2026-09-01   |           | VIGENTE
+```
+
+Después de los casos 400, 404 y 409 no quedó ninguna fila parcial: la base sigue consistente.
+
+## Respuestas de defensa
+
+1. **¿Por qué no usaste try/catch en el controller?** Porque `@RestControllerAdvice` centraliza la traducción de excepciones a HTTP; así cada controller sólo recibe, delega y responde.
+2. **¿Qué error produce 409 y por qué?** Registrar una segunda residencia VIGENTE para la misma persona y unidad: la petición es válida pero choca con el estado actual de los datos.
+3. **¿Qué validación pertenece al DTO y cuál al negocio?** Campos obligatorios y formatos van en el DTO; la existencia de la persona y el duplicado van en el caso de uso.
+4. **¿Qué hace `@RestControllerAdvice`?** Intercepta las excepciones de todos los controllers y construye un `ApiError` uniforme.
+5. **¿Por qué no devolver mensajes internos de PostgreSQL?** Exponen detalles de la base (tablas, constraints) y no son útiles para el usuario.
+6. **¿Qué protege `@Transactional`?** Que la verificación y el INSERT se confirmen juntos o no se confirme nada.
+7. **¿Dónde está el Port OUT y por qué el controller no lo conoce?** `ResidenciaRepositoryPort` en `domain/port/out`; el controller sólo conoce los Port IN, así no depende de la persistencia.

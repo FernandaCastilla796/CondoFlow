@@ -43,8 +43,8 @@ public class PersonaController {
     }
 
     @GetMapping
-    public List<PersonaResponse> listar(@RequestParam(required = false) String buscar) {
-        return consultar.listar(buscar).stream()
+    public List<PersonaResponse> listar(@RequestParam(required = false) String filtro) {
+        return consultar.listar(filtro).stream()
                 .map(PersonaWebMapper::toResponse)
                 .toList();
     }

@@ -4,7 +4,6 @@ import com.condoflow.person.domain.exception.CorreoPersonaDuplicadoException;
 import com.condoflow.person.domain.exception.PersonaNoEncontradaException;
 import com.condoflow.residence.domain.exception.ResidenciaNoEncontradaException;
 import com.condoflow.residence.domain.exception.ResidenciaVigenteDuplicadaException;
-import com.condoflow.residence.domain.exception.ResidenciaYaFinalizadaException;
 import com.condoflow.unit.domain.exception.UnidadNoEncontradaException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -45,8 +44,7 @@ public class GlobalExceptionHandler {
     /** 409: la petición es válida pero choca con el estado actual de los datos (regla de negocio). */
     @ExceptionHandler({
             CorreoPersonaDuplicadoException.class,
-            ResidenciaVigenteDuplicadaException.class,
-            ResidenciaYaFinalizadaException.class
+            ResidenciaVigenteDuplicadaException.class
     })
     public ResponseEntity<ApiError> handleConflict(RuntimeException ex, HttpServletRequest request) {
         return build(HttpStatus.CONFLICT, ex.getMessage(), request, Map.of());
@@ -76,7 +74,7 @@ public class GlobalExceptionHandler {
                 "El parámetro '" + ex.getName() + "' tiene un formato inválido", request, Map.of());
     }
 
-    /** 400: una invariante del dominio rechazó los datos (p. ej. fecha de fin anterior a la de inicio). */
+    /** 400: una validación del constructor del dominio rechazó los datos (p. ej. un campo obligatorio vacío). */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request, Map.of());

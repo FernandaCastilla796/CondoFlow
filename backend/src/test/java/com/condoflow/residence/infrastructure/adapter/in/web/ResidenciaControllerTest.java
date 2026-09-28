@@ -6,7 +6,6 @@ import com.condoflow.residence.domain.model.EstadoResidencia;
 import com.condoflow.residence.domain.model.Residencia;
 import com.condoflow.residence.domain.model.TipoResidencia;
 import com.condoflow.residence.domain.port.in.ConsultarResidenciaUseCase;
-import com.condoflow.residence.domain.port.in.FinalizarResidenciaUseCase;
 import com.condoflow.residence.domain.port.in.RegistrarResidenciaUseCase;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,22 +15,22 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Capítulo 08: los cinco escenarios obligatorios (201, 400, 404, 409, 500) con el formato ApiError.
+ * Pruebas obligatorias del Capítulo 07 y los cinco escenarios del Capítulo 08 (201, 400, 404, 409, 500).
  * GlobalExceptionHandler se carga automáticamente en @WebMvcTest.
  */
 @WebMvcTest(ResidenciaController.class)
@@ -51,8 +50,6 @@ class ResidenciaControllerTest {
     private RegistrarResidenciaUseCase registrar;
     @MockitoBean
     private ConsultarResidenciaUseCase consultar;
-    @MockitoBean
-    private FinalizarResidenciaUseCase finalizar;
 
     @Test
     void registroValidoDevuelve201() throws Exception {
@@ -113,6 +110,15 @@ class ResidenciaControllerTest {
     }
 
     @Test
+    void consultarPorIdDevuelve200() throws Exception {
+        when(consultar.buscarPorId(3L)).thenReturn(Optional.of(CREADA));
+
+        mvc.perform(get("/api/residencias/3"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.personaId").value(1));
+    }
+
+    @Test
     void consultarInexistenteDevuelve404() throws Exception {
         when(consultar.buscarPorId(999L)).thenReturn(Optional.empty());
 
@@ -122,20 +128,11 @@ class ResidenciaControllerTest {
     }
 
     @Test
-    void idConFormatoInvalidoDevuelve400() throws Exception {
-        mvc.perform(get("/api/residencias/abc"))
-                .andExpect(status().isBadRequest());
-    }
+    void listarPorPersonaDevuelve200() throws Exception {
+        when(consultar.listarPorPersona(1L)).thenReturn(List.of(CREADA));
 
-    @Test
-    void finalizarDevuelve200ConEstadoFinalizada() throws Exception {
-        LocalDate fin = LocalDate.of(2026, 12, 31);
-        when(finalizar.finalizar(eq(3L), eq(fin))).thenReturn(CREADA.finalizar(fin));
-
-        mvc.perform(patch("/api/residencias/3/finalizar").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"fechaFin\":\"2026-12-31\"}"))
+        mvc.perform(get("/api/residencias/persona/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.estado").value("FINALIZADA"))
-                .andExpect(jsonPath("$.fechaFin").value("2026-12-31"));
+                .andExpect(jsonPath("$", hasSize(1)));
     }
 }

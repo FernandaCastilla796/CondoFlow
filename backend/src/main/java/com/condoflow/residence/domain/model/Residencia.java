@@ -1,7 +1,5 @@
 package com.condoflow.residence.domain.model;
 
-import com.condoflow.residence.domain.exception.ResidenciaYaFinalizadaException;
-
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -36,20 +34,6 @@ public class Residencia {
     /** Toda residencia nueva nace VIGENTE y sin fecha de fin. */
     public static Residencia nueva(Long personaId, Long unidadId, TipoResidencia tipo, LocalDate fechaInicio) {
         return new Residencia(null, personaId, unidadId, tipo, fechaInicio, null, EstadoResidencia.VIGENTE);
-    }
-
-    /** Transición VIGENTE → FINALIZADA (RN-01). */
-    public Residencia finalizar(LocalDate fechaFin) {
-        Objects.requireNonNull(fechaFin, "La fecha de fin es obligatoria");
-        if (!estaVigente()) {
-            throw new ResidenciaYaFinalizadaException(residenciaId);
-        }
-        return new Residencia(residenciaId, personaId, unidadId, tipoResidencia, fechaInicio,
-                fechaFin, EstadoResidencia.FINALIZADA);
-    }
-
-    public boolean estaVigente() {
-        return estado == EstadoResidencia.VIGENTE;
     }
 
     public Long getResidenciaId() {
