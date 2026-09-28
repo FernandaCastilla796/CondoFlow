@@ -1,0 +1,42 @@
+### Java / Maven ###
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### Node / Vite / React Native ###
+node_modules/
+dist/
+dist-ssr/
+.expo/
+*.log
+
+### Secretos y configuración local (nunca versionar credenciales reales) ###
+.env
+.env.*
+!.env.example
+application-local.yml
+application-local.properties
+
+### IntelliJ IDEA / WebStorm / DataGrip ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### VS Code ###
+.vscode/
+
+### Sistema operativo ###
+.DS_Store
+Thumbs.db
