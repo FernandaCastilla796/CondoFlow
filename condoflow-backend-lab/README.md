@@ -5,7 +5,7 @@ El backend real con Spring Boot está en [`../backend`](../backend).
 
 ## Cómo ejecutarlo
 
-En IntelliJ: abrir la carpeta `backend-lab` y ejecutar `com.condoflow.Main` con JDK 21.
+En IntelliJ: abrir la carpeta `condoflow-backend-lab` (nombre `<nombre-proyecto>-backend-lab` exigido por el Capítulo 01) y ejecutar `com.condoflow.Main` con JDK 21.
 
 Desde terminal (con Maven instalado):
 

@@ -1,6 +1,6 @@
-# Capítulo 02 - Java 21: contratos, colecciones y errores controlados
+# Capítulo 02 - Java 21
 
-Código: [`backend-lab/`](../../backend-lab).
+Código: [`condoflow-backend-lab/`](../../condoflow-backend-lab).
 
 ## Estructura
 
@@ -61,7 +61,7 @@ Usamos `Map<Long, Persona>` (`LinkedHashMap`) porque la búsqueda principal es p
 - `PersonaNoEncontradaException`: se busca un id que no existe.
 - `CorreoPersonaDuplicadoException`: se intenta registrar un correo ya usado (ignora mayúsculas/minúsculas).
 
-## Enums
+## Enum
 
 - `TipoResidencia` (`PROPIETARIO`, `INQUILINO`): sale de la ficha oficial PA-04 ("propietarios/inquilinos") y de la columna `tipo_residencia`.
 - `EstadoResidencia` (`VIGENTE`, `FINALIZADA`): sale de RN-01 (vigencia temporal) y RF-14 (registrar residencia vigente).

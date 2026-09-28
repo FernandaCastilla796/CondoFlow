@@ -27,7 +27,7 @@ application-local.properties
 # (No usar "out/" a secas: ignoraría los packages adapter/out de la arquitectura hexagonal.)
 /out/
 /backend/out/
-/backend-lab/out/
+/condoflow-backend-lab/out/
 
 ### Eclipse ###
 .apt_generated

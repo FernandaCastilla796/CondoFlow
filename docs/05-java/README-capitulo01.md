@@ -1,6 +1,6 @@
 # Capítulo 01 - Java esencial
 
-Código: [`backend-lab/`](../../backend-lab) (proyecto `condoflow-backend-lab`, package base `com.condoflow`).
+Código: [`condoflow-backend-lab/`](../../condoflow-backend-lab) (proyecto `condoflow-backend-lab`, package base `com.condoflow`).
 
 ## Entidades elegidas
 
