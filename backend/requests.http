@@ -1,7 +1,51 @@
 ### Health
 GET http://localhost:8080/api/health
+Accept: application/json
 
-###
+### Crear persona válida -> 201
+POST http://localhost:8080/api/personas
+Content-Type: application/json
 
-### Persona demo
-GET http://localhost:8080/api/personas/demo
+{
+  "nombre": "Maria",
+  "apellido": "Lopez",
+  "documento": "7845123",
+  "telefono": "+591 70000001",
+  "correoElectronico": "maria.lopez@condoflow.com"
+}
+
+### Crear persona con nombre vacío -> 400
+POST http://localhost:8080/api/personas
+Content-Type: application/json
+
+{
+  "nombre": "",
+  "apellido": "Lopez",
+  "documento": "7845123",
+  "telefono": "+591 70000001",
+  "correoElectronico": "otra@condoflow.com"
+}
+
+### Crear persona con correo inválido -> 400
+POST http://localhost:8080/api/personas
+Content-Type: application/json
+
+{
+  "nombre": "Maria",
+  "apellido": "Lopez",
+  "documento": "7845123",
+  "telefono": "+591 70000001",
+  "correoElectronico": "no-es-un-correo"
+}
+
+### Listar personas -> 200
+GET http://localhost:8080/api/personas
+
+### Listar con filtro -> 200
+GET http://localhost:8080/api/personas?buscar=lopez
+
+### Buscar por id existente -> 200
+GET http://localhost:8080/api/personas/1
+
+### Buscar por id inexistente -> 404
+GET http://localhost:8080/api/personas/999
