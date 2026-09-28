@@ -2,7 +2,8 @@
 
 - Base: `http://localhost:8080`
 - Documentación interactiva: `http://localhost:8080/swagger-ui.html` (OpenAPI en `/v3/api-docs`)
-- Pruebas manuales: [`backend/requests.http`](../../backend/requests.http)
+- Colección de Postman: [`CondoFlow.postman_collection.json`](CondoFlow.postman_collection.json). En Postman: *Import* → elegir el archivo → *Run collection*. Tiene 20 peticiones y cada una verifica su código HTTP esperado.
+- Pruebas manuales en IntelliJ: [`backend/requests.http`](../../backend/requests.http)
 - Formato: JSON. Fechas en ISO `AAAA-MM-DD`.
 
 ## Formato de error (todas las respuestas 4xx y 5xx)
