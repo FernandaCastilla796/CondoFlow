@@ -1,93 +1,139 @@
 # CondoFlow — Administración Operativa de Condominio
 
-Proyecto integrador **PA-04** de Programación Aplicada 2026-2 (UPSA).
-
-Sistema full-stack para la administración operativa de condominios: unidades, residentes, áreas comunes, reservas, incidencias, visitas, comunicados, mantenimiento y notificaciones. No incluye contabilidad, expensas ni pagos reales (RN-08).
+Sistema full-stack para la administración operativa de condominios, orientado a centralizar la gestión de unidades, residentes, áreas comunes, reservas, incidencias, visitas, comunicados, mantenimiento y notificaciones.
 
 ## 1. Problema
 
-La administración de un condominio suele depender de registros manuales, hojas de cálculo y distintos medios de comunicación para controlar residentes, unidades, reservas, visitas, incidencias y tareas de mantenimiento. La información queda dispersa, es difícil hacer seguimiento y no hay visibilidad del estado operativo.
+La administración de un condominio puede depender de registros manuales, hojas de cálculo y diferentes medios de comunicación para controlar información de residentes, unidades, reservas, visitas, incidencias y tareas de mantenimiento. Esto puede generar información dispersa, dificultades para realizar seguimiento y poca visibilidad sobre el estado operativo del condominio.
 
-## 2. Actores
+## 2. Objetivo del MVP
 
-| Actor | Canal principal |
+Construir una plataforma web y móvil que permita centralizar la administración operativa del condominio, gestionando unidades, personas y residencias, áreas comunes, reservas, incidencias, visitas, comunicados, tareas de mantenimiento y notificaciones.
+
+## 3. Actores principales
+
+- Administrador
+- Residente
+- Personal de mantenimiento
+- Personal de seguridad
+- Supervisor
+
+## 4. Alcance inicial
+
+- Gestión de unidades del condominio.
+- Gestión de personas y residencias.
+- Gestión de áreas comunes.
+- Gestión de reservas.
+- Registro y seguimiento de incidencias.
+- Gestión de visitas.
+- Gestión de comunicados.
+- Gestión de tareas de mantenimiento.
+- Gestión de notificaciones.
+- Panel operativo para consultar información relevante.
+
+## 5. Fuera de alcance
+
+- Contabilidad, expensas y pagos reales (RN-08 de la ficha PA-04).
+- Integración con sistemas físicos de control de acceso.
+- Automatización mediante dispositivos IoT.
+- Integraciones bancarias reales.
+- Facturación fiscal.
+- Funcionalidades que no estén contempladas en la ficha oficial del proyecto.
+
+## 6. Stack objetivo del semestre
+
+- Backend: Java 21 + Spring Boot
+- Base de datos: PostgreSQL + Flyway
+- Web: React + TypeScript
+- Móvil: React Native + TypeScript
+- Pruebas API: Postman
+- Contenedores: Docker / Docker Compose
+- Versionado: Git + GitHub
+- CI: GitHub Actions
+- IA: Spring AI, únicamente como capacidad complementaria
+
+## 7. Estado actual
+
+| Avance | Estado |
 |---|---|
-| Administrador | Web |
-| Portería/seguridad | Web / móvil |
-| Residente | Móvil |
-| Personal de mantenimiento | Móvil |
+| Clases 01–05: problema, alcance, backlog, modelo conceptual, relacional, DER lógico, diccionario, modelo físico y plan de migración | ✅ |
+| Clases 06–08: PostgreSQL con migraciones V1 (núcleo), V2 (datos) y V3 (alineación con el modelo físico); consultas y JOIN | ✅ |
+| Capítulos 01–02: Java 21 esencial en `condoflow-backend-lab/` | ✅ |
+| Capítulos 03–08: backend Spring Boot con Persona → Residencia, arquitectura hexagonal, errores y transacciones | ✅ |
+| Frontend Guía 01: estructura React + TypeScript + Vite en `web/` | ✅ |
+| Móvil, autenticación y resto de módulos | ⬜ próximas clases |
 
-Detalle en [`docs/02-requirements/requisitos-v0.1.md`](docs/02-requirements/requisitos-v0.1.md).
+## 8. Documentación
 
-## 3. Stack
+- `docs/01-vision/vision-v0.1.md`
+- `docs/01-vision/glossary-v0.1.md`
+- `docs/02-requirements/backlog-v0.1.md`
+- `docs/02-requirements/requisitos-v0.1.md`
+- `docs/03-decisions/`
+- `docs/04-model/` (modelo conceptual, relacional, DER lógico, diccionario de datos, decisiones de integridad, convenciones, modelo físico, plan de migración)
+- `docs/05-database/` (evidencia de la Clase 06 y consultas de las Clases 07 y 08)
+- `docs/05-java/` (README de los capítulos 01 a 08)
+- `docs/06-api/` (catálogo de la API y colección de Postman)
+- `web/README-front.md`
 
-| Capa | Tecnología |
-|---|---|
-| Backend | Java 21 · Spring Boot 4 · Spring Data JPA/Hibernate · Bean Validation |
-| Base de datos | PostgreSQL 16 · Flyway |
-| Web | React 19 · TypeScript · Vite |
-| Móvil | React Native + TypeScript *(pendiente)* |
-| DevOps | Docker Compose · GitHub Actions |
-| Documentación de API | OpenAPI / Swagger UI |
+## 9. Regla de trabajo
 
-## 4. Estado actual
+Cada cambio importante debe ser comprensible, trazable y defendible. El repositorio es la fuente de verdad del proyecto.
 
-| Área | Estado |
-|---|---|
-| Documentación de análisis y modelo de datos (Clases 01–05) | ✅ |
-| PostgreSQL: V1 núcleo, V2 datos de prueba, V3 alineación con el modelo físico (Clases 06–08) | ✅ |
-| Java esencial, capítulos 01–02 (`backend-lab/`) | ✅ |
-| Backend Spring Boot, capítulos 03–08: Persona → Residencia con arquitectura hexagonal, errores y transacciones | ✅ |
-| Frontend: estructura React + TypeScript + Vite (Guía 01) | ✅ |
-| Docker Compose + CI | ✅ |
-| Autenticación/roles, resto de módulos, móvil, Spring AI | ⬜ próximos cortes |
+## 10. Cómo levantar cada componente
 
-## 5. Cómo ejecutar
+### Base de datos (Guía DataGrip)
 
-### Opción A — Docker Compose (PostgreSQL + backend)
+Conectado como `postgres` en DataGrip:
 
-```bash
-cp .env.example .env
+```sql
+CREATE ROLE condoflow_admin
+WITH
+    LOGIN
+    PASSWORD 'Cambia_Esta_Clave'
+    SUPERUSER
+    CREATEDB
+    CREATEROLE
+    INHERIT;
+
+CREATE DATABASE condoflow
+    WITH
+    OWNER = condoflow_admin
+    ENCODING = 'UTF8';
 ```
 
-Editar `.env` y cambiar `POSTGRES_PASSWORD`. Luego:
+Cambiar la contraseña de ejemplo y no subirla a GitHub. Las tablas no se crean a mano: las crea Flyway con las migraciones de `backend/src/main/resources/db/migration` en el schema `condoflow` al arrancar el backend.
 
-```bash
-docker compose up --build
-```
+### Backend
 
-- API: http://localhost:8080/api/health
-- Swagger UI: http://localhost:8080/swagger-ui.html
-- PostgreSQL (DataGrip): `localhost:5433`, base `condoflow`, schema `condoflow`
-
-Flyway aplica automáticamente las migraciones de `backend/src/main/resources/db/migration`.
-
-### Opción B — Backend local con PostgreSQL instalado
-
-1. Crear la base y el usuario en DataGrip/psql:
-
-   ```sql
-   CREATE USER condoflow WITH PASSWORD 'tu_clave';
-   CREATE DATABASE condoflow OWNER condoflow;
-   ```
-
-2. Copiar `backend/.env.example` como `backend/.env` y completar `DB_PASSWORD`.
-3. Ejecutar `CondoflowBackendApplication` desde IntelliJ (JDK 21), o bien:
+1. Copiar `backend/.env.example` como `backend/.env` y poner la contraseña de `condoflow_admin`.
+2. Abrir `backend/` en IntelliJ IDEA (JDK 21) y ejecutar `CondoflowBackendApplication`, o desde la terminal:
 
    ```bash
    cd backend
    ./mvnw spring-boot:run
    ```
 
-### Frontend
+3. Probar con `backend/requests.http`, con la colección de Postman de `docs/06-api/` o con Swagger UI en http://localhost:8080/swagger-ui.html.
+
+### Web
 
 ```bash
-cd frontend
+cd web
 npm install
 npm run dev
 ```
 
 Abrir http://localhost:5173.
+
+### Docker Compose (alternativa)
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+Levanta PostgreSQL (puerto 5433 del host) y el backend (puerto 8080).
 
 ### Pruebas
 
@@ -96,50 +142,16 @@ cd backend
 ./mvnw test
 ```
 
-Las pruebas de integración usan Testcontainers: corren si hay Docker disponible (siempre en GitHub Actions) y se omiten si no lo hay.
-
-## 6. Estructura del repositorio
+## 11. Estructura del repositorio
 
 ```text
 CondoFlow/
-├── backend/                 Spring Boot (condoflow-backend)
-│   ├── src/main/java/com/condoflow/
-│   │   ├── person/          módulo Persona (domain · application · infrastructure)
-│   │   ├── unit/            módulo Unidad (consulta)
-│   │   ├── residence/       módulo Residencia (relación 1:N con Persona)
-│   │   └── shared/          health, ApiError, GlobalExceptionHandler, CORS/OpenAPI
-│   ├── src/main/resources/db/migration/   V1, V2, V3 (Flyway)
-│   ├── requests.http        pruebas manuales de la API
-│   └── Dockerfile
-├── backend-lab/             Java puro de los capítulos 01–02
-├── frontend/                React + TypeScript + Vite (condoflow-frontend)
-├── docs/
-│   ├── 01-vision/           visión y glosario
-│   ├── 02-requirements/     backlog, requisitos RF/RNF/RN y actores
-│   ├── 03-decisions/        registro de decisiones (D-01…D-14) y deuda técnica
-│   ├── 04-model/            modelo conceptual, relacional, DER, diccionario, físico, plan de migración
-│   ├── 05-database/         consultas de las Clases 07 y 08
-│   ├── 05-java/             README de los capítulos 01–08
-│   └── 06-api/              catálogo de la API
+├── backend/                  Spring Boot (condoflow-backend) · migraciones en src/main/resources/db/migration
+├── condoflow-backend-lab/    Java 21 puro de los Capítulos 01 y 02
+├── web/                      React + TypeScript + Vite (condoflow-frontend)
+├── docs/                     documentación del proyecto
 ├── docker-compose.yml
 └── .github/workflows/ci.yml
 ```
 
-## 7. Documentación
-
-| Tema | Documento |
-|---|---|
-| Visión y alcance | [`docs/01-vision/vision-v0.1.md`](docs/01-vision/vision-v0.1.md) |
-| Glosario | [`docs/01-vision/glossary-v0.1.md`](docs/01-vision/glossary-v0.1.md) |
-| Backlog (historias de usuario) | [`docs/02-requirements/backlog-v0.1.md`](docs/02-requirements/backlog-v0.1.md) |
-| Requisitos, reglas de negocio y trazabilidad | [`docs/02-requirements/requisitos-v0.1.md`](docs/02-requirements/requisitos-v0.1.md) |
-| Decisiones técnicas | [`docs/03-decisions/README.md`](docs/03-decisions/README.md) |
-| Modelo de datos | [`docs/04-model/`](docs/04-model) |
-| Migraciones y restricciones | [`docs/04-model/plan-migracion-v1.md`](docs/04-model/plan-migracion-v1.md) |
-| Backend capítulo por capítulo | [`docs/05-java/`](docs/05-java) |
-| API | [`docs/06-api/api-v1.md`](docs/06-api/api-v1.md) |
-| Frontend | [`frontend/README-front.md`](frontend/README-front.md) |
-
-## 8. Flujo de trabajo
-
-`main` es la rama estable. Cada cambio se hace en una rama `feat/...`, `fix/...` o `docs/...` y entra a `main` mediante pull request revisado por otro integrante, con el CI en verde (decisión D-14).
+La carpeta `mobile/` se agregará cuando empiece React Native.

@@ -1,0 +1,181 @@
+{
+  "info": {
+    "name": "CondoFlow API v1",
+    "description": "Colección de validación de la API de CondoFlow (PA-04). Importar en Postman y ejecutar con Run Collection con el backend levantado en http://localhost:8080. Cada petición verifica el código HTTP esperado.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "correo", "value": "postman.prueba@condoflow.com" }
+  ],
+  "item": [
+    {
+      "name": "Capítulo 03",
+      "item": [
+        {
+          "name": "Health -> 200",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));", "pm.test('status OK', () => pm.expect(pm.response.json().status).to.eql('OK'));"] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/health" }
+        },
+        {
+          "name": "Demo persona -> 200",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/personas/demo" }
+        }
+      ]
+    },
+    {
+      "name": "Personas",
+      "item": [
+        {
+          "name": "Crear persona válida -> 201",
+          "event": [
+            { "listen": "prerequest", "script": { "exec": ["pm.collectionVariables.set('correo', 'postman.' + Date.now() + '@condoflow.com');"] } },
+            { "listen": "test", "script": { "exec": ["pm.test('201 Created', () => pm.response.to.have.status(201));", "pm.collectionVariables.set('personaId', pm.response.json().personaId);"] } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/personas",
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Suarez\",\n  \"documento\": \"9988776\",\n  \"telefono\": \"+591 71112233\",\n  \"correoElectronico\": \"{{correo}}\"\n}" }
+          }
+        },
+        {
+          "name": "Crear persona con correo repetido -> 409",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('409 Conflict', () => pm.response.to.have.status(409));"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/personas",
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Otra\",\n  \"apellido\": \"Persona\",\n  \"documento\": \"1112223\",\n  \"telefono\": \"+591 70000009\",\n  \"correoElectronico\": \"{{correo}}\"\n}" }
+          }
+        },
+        {
+          "name": "Crear persona con nombre vacío -> 400",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('400 Bad Request', () => pm.response.to.have.status(400));", "pm.test('fieldErrors.nombre', () => pm.expect(pm.response.json().fieldErrors).to.have.property('nombre'));"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/personas",
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"\",\n  \"apellido\": \"Suarez\",\n  \"documento\": \"9988776\",\n  \"telefono\": \"+591 71112233\",\n  \"correoElectronico\": \"otra@condoflow.com\"\n}" }
+          }
+        },
+        {
+          "name": "Crear persona con correo inválido -> 400",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('400 Bad Request', () => pm.response.to.have.status(400));"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/personas",
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Suarez\",\n  \"documento\": \"9988776\",\n  \"telefono\": \"+591 71112233\",\n  \"correoElectronico\": \"no-es-un-correo\"\n}" }
+          }
+        },
+        {
+          "name": "Listar personas -> 200",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));", "pm.test('es arreglo', () => pm.expect(pm.response.json()).to.be.an('array'));"] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/personas" }
+        },
+        {
+          "name": "Listar con filtro -> 200",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/personas?filtro=suarez" }
+        },
+        {
+          "name": "Buscar persona creada -> 200",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/personas/{{personaId}}" }
+        },
+        {
+          "name": "Buscar persona inexistente -> 404",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('404 Not Found', () => pm.response.to.have.status(404));"] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/personas/999999" }
+        }
+      ]
+    },
+    {
+      "name": "Unidades",
+      "item": [
+        {
+          "name": "Listar unidades -> 200",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));", "pm.collectionVariables.set('unidadId', pm.response.json()[0].unidadId);"] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/unidades" }
+        },
+        {
+          "name": "Buscar unidad inexistente -> 404",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('404 Not Found', () => pm.response.to.have.status(404));"] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/unidades/999999" }
+        }
+      ]
+    },
+    {
+      "name": "Residencias",
+      "item": [
+        {
+          "name": "Registrar residencia -> 201",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('201 Created', () => pm.response.to.have.status(201));", "pm.test('estado VIGENTE', () => pm.expect(pm.response.json().estado).to.eql('VIGENTE'));", "pm.collectionVariables.set('residenciaId', pm.response.json().residenciaId);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/residencias",
+            "body": { "mode": "raw", "raw": "{\n  \"personaId\": {{personaId}},\n  \"unidadId\": {{unidadId}},\n  \"tipoResidencia\": \"INQUILINO\",\n  \"fechaInicio\": \"2026-09-01\"\n}" }
+          }
+        },
+        {
+          "name": "Registrar la misma residencia vigente -> 409",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('409 Conflict', () => pm.response.to.have.status(409));"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/residencias",
+            "body": { "mode": "raw", "raw": "{\n  \"personaId\": {{personaId}},\n  \"unidadId\": {{unidadId}},\n  \"tipoResidencia\": \"INQUILINO\",\n  \"fechaInicio\": \"2026-09-01\"\n}" }
+          }
+        },
+        {
+          "name": "Registrar con persona inexistente -> 404",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('404 Not Found', () => pm.response.to.have.status(404));"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/residencias",
+            "body": { "mode": "raw", "raw": "{\n  \"personaId\": 999999,\n  \"unidadId\": {{unidadId}},\n  \"tipoResidencia\": \"INQUILINO\",\n  \"fechaInicio\": \"2026-09-01\"\n}" }
+          }
+        },
+        {
+          "name": "Registrar con tipo fuera del enum -> 400",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('400 Bad Request', () => pm.response.to.have.status(400));"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/residencias",
+            "body": { "mode": "raw", "raw": "{\n  \"personaId\": {{personaId}},\n  \"unidadId\": {{unidadId}},\n  \"tipoResidencia\": \"ALQUILER\",\n  \"fechaInicio\": \"2026-09-01\"\n}" }
+          }
+        },
+        {
+          "name": "Registrar sin campos obligatorios -> 400",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('400 Bad Request', () => pm.response.to.have.status(400));"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/residencias",
+            "body": { "mode": "raw", "raw": "{\n  \"unidadId\": 1\n}" }
+          }
+        },
+        {
+          "name": "Consultar residencia -> 200",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/residencias/{{residenciaId}}" }
+        },
+        {
+          "name": "Consultar residencia inexistente -> 404",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('404 Not Found', () => pm.response.to.have.status(404));"] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/residencias/999999" }
+        },
+        {
+          "name": "Residencias de la persona -> 200",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));", "pm.test('al menos una', () => pm.expect(pm.response.json().length).to.be.above(0));"] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/residencias/persona/{{personaId}}" }
+        }
+      ]
+    }
+  ]
+}
