@@ -1,4 +1,4 @@
-package com.condoflow.person.exception;
+package com.condoflow.person.domain.exception;
 
 public class CorreoPersonaDuplicadoException extends RuntimeException {
 

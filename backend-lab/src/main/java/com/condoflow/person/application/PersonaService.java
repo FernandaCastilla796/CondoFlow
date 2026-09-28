@@ -1,9 +1,9 @@
 package com.condoflow.person.application;
 
 import com.condoflow.person.domain.Persona;
+import com.condoflow.person.domain.exception.CorreoPersonaDuplicadoException;
+import com.condoflow.person.domain.exception.PersonaNoEncontradaException;
 import com.condoflow.person.domain.port.PersonaRepository;
-import com.condoflow.person.exception.CorreoPersonaDuplicadoException;
-import com.condoflow.person.exception.PersonaNoEncontradaException;
 
 import java.util.List;
 
