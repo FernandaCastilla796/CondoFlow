@@ -1,5 +1,6 @@
 package com.condoflow.person.infrastructure.adapter.in.web;
 
+import com.condoflow.person.domain.exception.PersonaNoEncontradaException;
 import com.condoflow.person.domain.model.Persona;
 import com.condoflow.person.domain.port.in.ConsultarPersonaUseCase;
 import com.condoflow.person.domain.port.in.RegistrarPersonaUseCase;
@@ -49,10 +50,9 @@ public class PersonaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PersonaResponse> buscarPorId(@PathVariable Long id) {
+    public PersonaResponse buscarPorId(@PathVariable Long id) {
         return consultar.buscarPorId(id)
                 .map(PersonaWebMapper::toResponse)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElseThrow(() -> new PersonaNoEncontradaException(id));
     }
 }

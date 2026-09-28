@@ -6,6 +6,7 @@ import com.condoflow.person.domain.port.in.ConsultarPersonaUseCase;
 import com.condoflow.person.domain.port.in.RegistrarPersonaUseCase;
 import com.condoflow.person.domain.port.out.PersonaRepositoryPort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,7 +23,9 @@ public class PersonaService implements RegistrarPersonaUseCase, ConsultarPersona
         this.repositoryPort = repositoryPort;
     }
 
+    /** La verificación del correo y el INSERT forman una sola unidad de trabajo. */
     @Override
+    @Transactional
     public Persona registrar(Persona persona) {
         if (repositoryPort.existePorCorreoElectronico(persona.getCorreoElectronico())) {
             throw new CorreoPersonaDuplicadoException(persona.getCorreoElectronico());
@@ -31,11 +34,13 @@ public class PersonaService implements RegistrarPersonaUseCase, ConsultarPersona
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Persona> buscarPorId(Long id) {
         return repositoryPort.buscarPorId(id);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Persona> listar(String filtro) {
         return repositoryPort.listar(filtro == null ? null : filtro.trim());
     }

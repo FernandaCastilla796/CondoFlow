@@ -1,6 +1,7 @@
 package com.condoflow.residence.infrastructure.adapter.in.web.mapper;
 
 import com.condoflow.residence.domain.model.Residencia;
+import com.condoflow.residence.domain.port.in.RegistrarResidenciaCommand;
 import com.condoflow.residence.infrastructure.adapter.in.web.dto.CrearResidenciaRequest;
 import com.condoflow.residence.infrastructure.adapter.in.web.dto.ResidenciaResponse;
 
@@ -9,8 +10,8 @@ public final class ResidenciaWebMapper {
     private ResidenciaWebMapper() {
     }
 
-    public static Residencia toDomain(CrearResidenciaRequest request) {
-        return Residencia.nueva(request.personaId(), request.unidadId(),
+    public static RegistrarResidenciaCommand toCommand(CrearResidenciaRequest request) {
+        return new RegistrarResidenciaCommand(request.personaId(), request.unidadId(),
                 request.tipoResidencia(), request.fechaInicio());
     }
 

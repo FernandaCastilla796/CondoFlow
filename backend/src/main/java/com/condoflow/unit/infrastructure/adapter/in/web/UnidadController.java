@@ -1,8 +1,8 @@
 package com.condoflow.unit.infrastructure.adapter.in.web;
 
+import com.condoflow.unit.domain.exception.UnidadNoEncontradaException;
 import com.condoflow.unit.domain.model.Unidad;
 import com.condoflow.unit.domain.port.in.ConsultarUnidadUseCase;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,11 +27,10 @@ public class UnidadController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UnidadResponse> buscarPorId(@PathVariable Long id) {
+    public UnidadResponse buscarPorId(@PathVariable Long id) {
         return consultar.buscarPorId(id)
                 .map(UnidadController::toResponse)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElseThrow(() -> new UnidadNoEncontradaException(id));
     }
 
     private static UnidadResponse toResponse(Unidad u) {

@@ -1,5 +1,6 @@
 package com.condoflow.person.infrastructure.adapter.in.web;
 
+import com.condoflow.person.domain.exception.CorreoPersonaDuplicadoException;
 import com.condoflow.person.domain.model.EstadoPersona;
 import com.condoflow.person.domain.model.Persona;
 import com.condoflow.person.domain.port.in.ConsultarPersonaUseCase;
@@ -96,7 +97,29 @@ class PersonaControllerTest {
         when(consultar.buscarPorId(999L)).thenReturn(Optional.empty());
 
         mvc.perform(get("/api/personas/999"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("No existe una persona con id 999"));
+    }
+
+    @Test
+    void postConCorreoDuplicadoDevuelve409() throws Exception {
+        when(registrar.registrar(any()))
+                .thenThrow(new CorreoPersonaDuplicadoException("maria.lopez@condoflow.com"));
+
+        mvc.perform(post("/api/personas").contentType(MediaType.APPLICATION_JSON).content(VALIDA))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.message")
+                        .value("Ya existe una persona registrada con el correo maria.lopez@condoflow.com"));
+    }
+
+    @Test
+    void erroresDeValidacionIncluyenElCampo() throws Exception {
+        mvc.perform(post("/api/personas").contentType(MediaType.APPLICATION_JSON)
+                        .content(VALIDA.replace("Maria.Lopez@CondoFlow.com", "no-es-un-correo")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors.correoElectronico")
+                        .value("El correo electrónico no tiene un formato válido"));
     }
 
     @Test

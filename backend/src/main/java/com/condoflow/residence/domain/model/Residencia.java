@@ -1,5 +1,7 @@
 package com.condoflow.residence.domain.model;
 
+import com.condoflow.residence.domain.exception.ResidenciaYaFinalizadaException;
+
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -40,7 +42,7 @@ public class Residencia {
     public Residencia finalizar(LocalDate fechaFin) {
         Objects.requireNonNull(fechaFin, "La fecha de fin es obligatoria");
         if (!estaVigente()) {
-            throw new IllegalStateException("La residencia " + residenciaId + " ya está finalizada");
+            throw new ResidenciaYaFinalizadaException(residenciaId);
         }
         return new Residencia(residenciaId, personaId, unidadId, tipoResidencia, fechaInicio,
                 fechaFin, EstadoResidencia.FINALIZADA);

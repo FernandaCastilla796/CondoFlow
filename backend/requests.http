@@ -1,41 +1,48 @@
+# Pruebas manuales de la API de CondoFlow (IntelliJ HTTP Client).
+# Arrancar el backend y ejecutar cada petición con el botón ▶.
+
 ### Health
 GET http://localhost:8080/api/health
 Accept: application/json
+
+##############################################################
+# PERSONAS
+##############################################################
 
 ### Crear persona válida -> 201
 POST http://localhost:8080/api/personas
 Content-Type: application/json
 
 {
-  "nombre": "Maria",
-  "apellido": "Lopez",
-  "documento": "7845123",
-  "telefono": "+591 70000001",
-  "correoElectronico": "maria.lopez@condoflow.com"
+  "nombre": "Ana",
+  "apellido": "Suarez",
+  "documento": "9988776",
+  "telefono": "+591 71112233",
+  "correoElectronico": "ana.suarez@condoflow.com"
 }
 
-### Crear persona con nombre vacío -> 400
+### Crear persona con campos inválidos -> 400 (fieldErrors)
 POST http://localhost:8080/api/personas
 Content-Type: application/json
 
 {
   "nombre": "",
-  "apellido": "Lopez",
-  "documento": "7845123",
-  "telefono": "+591 70000001",
-  "correoElectronico": "otra@condoflow.com"
+  "apellido": "Suarez",
+  "documento": "9988776",
+  "telefono": "+591 71112233",
+  "correoElectronico": "no-es-un-correo"
 }
 
-### Crear persona con correo inválido -> 400
+### Crear persona con correo repetido -> 409
 POST http://localhost:8080/api/personas
 Content-Type: application/json
 
 {
   "nombre": "Maria",
-  "apellido": "Lopez",
-  "documento": "7845123",
-  "telefono": "+591 70000001",
-  "correoElectronico": "no-es-un-correo"
+  "apellido": "Otra",
+  "documento": "1112223",
+  "telefono": "+591 70000009",
+  "correoElectronico": "maria.lopez@condoflow.com"
 }
 
 ### Listar personas -> 200
@@ -44,8 +51,99 @@ GET http://localhost:8080/api/personas
 ### Listar con filtro -> 200
 GET http://localhost:8080/api/personas?buscar=lopez
 
-### Buscar por id existente -> 200
+### Buscar persona existente -> 200
 GET http://localhost:8080/api/personas/1
 
-### Buscar por id inexistente -> 404
+### Buscar persona inexistente -> 404
 GET http://localhost:8080/api/personas/999
+
+##############################################################
+# UNIDADES
+##############################################################
+
+### Listar unidades -> 200
+GET http://localhost:8080/api/unidades
+
+### Buscar unidad inexistente -> 404
+GET http://localhost:8080/api/unidades/999
+
+##############################################################
+# RESIDENCIAS
+##############################################################
+
+### Registrar residencia -> 201
+POST http://localhost:8080/api/residencias
+Content-Type: application/json
+
+{
+  "personaId": 2,
+  "unidadId": 1,
+  "tipoResidencia": "INQUILINO",
+  "fechaInicio": "2026-09-10"
+}
+
+### Registrar la misma residencia vigente otra vez -> 409
+POST http://localhost:8080/api/residencias
+Content-Type: application/json
+
+{
+  "personaId": 2,
+  "unidadId": 1,
+  "tipoResidencia": "INQUILINO",
+  "fechaInicio": "2026-09-10"
+}
+
+### Registrar con persona inexistente -> 404
+POST http://localhost:8080/api/residencias
+Content-Type: application/json
+
+{
+  "personaId": 999,
+  "unidadId": 1,
+  "tipoResidencia": "INQUILINO",
+  "fechaInicio": "2026-09-01"
+}
+
+### Registrar con tipo fuera del enum -> 400
+POST http://localhost:8080/api/residencias
+Content-Type: application/json
+
+{
+  "personaId": 1,
+  "unidadId": 2,
+  "tipoResidencia": "ALQUILER",
+  "fechaInicio": "2026-09-01"
+}
+
+### Registrar sin campos obligatorios -> 400 (fieldErrors)
+POST http://localhost:8080/api/residencias
+Content-Type: application/json
+
+{
+  "unidadId": 1
+}
+
+### Consultar residencia -> 200
+GET http://localhost:8080/api/residencias/1
+
+### Consultar residencia inexistente -> 404
+GET http://localhost:8080/api/residencias/999
+
+### Residencias de una persona -> 200
+GET http://localhost:8080/api/residencias/persona/2
+
+### Finalizar residencia (RN-01) -> 200
+PATCH http://localhost:8080/api/residencias/1/finalizar
+Content-Type: application/json
+
+{
+  "fechaFin": "2026-12-31"
+}
+
+### Finalizar otra vez -> 409
+PATCH http://localhost:8080/api/residencias/1/finalizar
+Content-Type: application/json
+
+{
+  "fechaFin": "2027-01-31"
+}
