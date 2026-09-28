@@ -1,104 +1,19 @@
-# Capítulo 01 - Java esencial
+# condoflow-backend-lab
 
-## Entidades elegidas
+Laboratorio de Java 21 puro de los Capítulos 01 y 02 (sin Spring Boot, JPA ni PostgreSQL).
+El backend real con Spring Boot está en [`../backend`](../backend).
 
-* Tabla padre: `persona`
-* Tabla dependiente: `residencia`
-* Relación: `1:N`
-* PK de persona: `persona_id`
-* PK de residencia: `residencia_id`
-* FK: `residencia.persona_id → persona.persona_id`
+## Cómo ejecutarlo
 
-## Clases Java
+En IntelliJ: abrir la carpeta `backend-lab` y ejecutar `com.condoflow.Main` con JDK 21.
 
-* `Persona`
-* `Residencia`
-* `PersonaRepository`
-* `Main`
+Desde terminal (con Maven instalado):
 
-## Estructura de packages
-
-```text
-com.condoflow
-├── Main.java
-├── person
-│   ├── domain
-│   │   ├── Persona.java
-│   │   └── PersonaRepository.java
-│   └── exception
-└── residence
-    ├── domain
-    │   └── Residencia.java
-    └── exception
+```bash
+mvn -q compile exec:java -Dexec.mainClass=com.condoflow.Main
 ```
 
-## Relación 1:N
+## Documentación
 
-Una persona puede tener varias residencias.
-
-En Java esta relación se representa mediante una colección privada:
-
-```java
-private final List<Residencia> residencias = new ArrayList<>();
-```
-
-La relación se administra mediante:
-
-```java
-agregarResidencia()
-```
-
-## Regla implementada
-
-La clase `Residencia` valida que `residenciaId`, `personaId` y `unidadId` no sean `null`.
-
-Además, en PostgreSQL existe una restricción de unicidad para el correo electrónico de `persona`.
-
-## Decisiones
-
-* Los atributos son `private` para proteger el estado interno de los objetos.
-* La colección de residencias es privada para evitar modificaciones directas.
-* `getResidencias()` devuelve una colección no modificable.
-* La interfaz `PersonaRepository` expresa el contrato de guardar y buscar una persona.
-* La interfaz todavía no implementa PostgreSQL ni `JpaRepository`.
-* No se implementaron todavía Spring Boot, JPA ni conexión entre Java y PostgreSQL.
-
-## Prueba
-
-El programa `Main` crea una persona y dos residencias, las relaciona mediante `agregarResidencia()` y muestra como resultado:
-
-```text
-Persona: Juan Perez
-Correo: juan.perez@gmail.com
-Cantidad de residencias: 2
-```
-
-Y pega esto:
-
-```markdown
-# Capítulo 02 - Java 21
-
-## Entidad padre
-
-`Persona`
-
-PK:
-
-`personaId`
-
-## Entidad dependiente
-
-`Residencia`
-
-FK:
-
-`personaId`
-
-## Relación
-
-La relación es `1:N` porque una persona puede tener varias residencias.
-
-En la clase `Persona` se representa mediante:
-
-```java
-private final List<Residencia> residencias = new ArrayList<>();
+- [Capítulo 01 - Java esencial](../docs/05-java/README-capitulo01.md)
+- [Capítulo 02 - Contratos, colecciones y errores](../docs/05-java/README-capitulo02.md)
