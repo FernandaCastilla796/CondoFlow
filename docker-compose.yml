@@ -1,0 +1,41 @@
+# Entorno reproducible de CondoFlow: PostgreSQL + backend.
+#   1. cp .env.example .env   (y cambiar POSTGRES_PASSWORD)
+#   2. docker compose up --build
+# Backend: http://localhost:8080 · Swagger: http://localhost:8080/swagger-ui.html
+# Flyway aplica las migraciones V1..Vn automáticamente al arrancar el backend.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: condoflow-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-condoflow}
+      POSTGRES_USER: ${POSTGRES_USER:-condoflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Definir POSTGRES_PASSWORD en .env}
+    ports:
+      # 5433 en el host para no chocar con un PostgreSQL instalado localmente en 5432.
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
+    volumes:
+      - condoflow-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: condoflow-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-condoflow}
+      DB_USERNAME: ${POSTGRES_USER:-condoflow}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+    ports:
+      - "8080:8080"
+
+volumes:
+  condoflow-pgdata:
