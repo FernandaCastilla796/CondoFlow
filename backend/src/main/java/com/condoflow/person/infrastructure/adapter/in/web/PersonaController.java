@@ -1,7 +1,8 @@
 package com.condoflow.person.infrastructure.adapter.in.web;
 
-import com.condoflow.person.application.PersonaService;
 import com.condoflow.person.domain.model.Persona;
+import com.condoflow.person.domain.port.in.ConsultarPersonaUseCase;
+import com.condoflow.person.domain.port.in.RegistrarPersonaUseCase;
 import com.condoflow.person.infrastructure.adapter.in.web.dto.CrearPersonaRequest;
 import com.condoflow.person.infrastructure.adapter.in.web.dto.PersonaResponse;
 import com.condoflow.person.infrastructure.adapter.in.web.mapper.PersonaWebMapper;
@@ -18,33 +19,38 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Adaptador de entrada HTTP del módulo person. */
+/**
+ * Adaptador de entrada HTTP del módulo person.
+ * Depende de los Port IN (casos de uso), nunca de JpaRepository.
+ */
 @RestController
 @RequestMapping("/api/personas")
 public class PersonaController {
 
-    private final PersonaService service;
+    private final RegistrarPersonaUseCase registrar;
+    private final ConsultarPersonaUseCase consultar;
 
-    public PersonaController(PersonaService service) {
-        this.service = service;
+    public PersonaController(RegistrarPersonaUseCase registrar, ConsultarPersonaUseCase consultar) {
+        this.registrar = registrar;
+        this.consultar = consultar;
     }
 
     @PostMapping
     public ResponseEntity<PersonaResponse> crear(@Valid @RequestBody CrearPersonaRequest request) {
-        Persona creada = service.registrar(PersonaWebMapper.toDomain(request));
+        Persona creada = registrar.registrar(PersonaWebMapper.toDomain(request));
         return ResponseEntity.status(HttpStatus.CREATED).body(PersonaWebMapper.toResponse(creada));
     }
 
     @GetMapping
     public List<PersonaResponse> listar(@RequestParam(required = false) String buscar) {
-        return service.listar(buscar).stream()
+        return consultar.listar(buscar).stream()
                 .map(PersonaWebMapper::toResponse)
                 .toList();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<PersonaResponse> buscarPorId(@PathVariable Long id) {
-        return service.buscarPorId(id)
+        return consultar.buscarPorId(id)
                 .map(PersonaWebMapper::toResponse)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

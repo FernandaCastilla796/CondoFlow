@@ -1,8 +1,9 @@
 package com.condoflow.person.infrastructure.adapter.in.web;
 
-import com.condoflow.person.application.PersonaService;
 import com.condoflow.person.domain.model.EstadoPersona;
 import com.condoflow.person.domain.model.Persona;
+import com.condoflow.person.domain.port.in.ConsultarPersonaUseCase;
+import com.condoflow.person.domain.port.in.RegistrarPersonaUseCase;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -24,7 +25,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Contrato HTTP de /api/personas (Capítulo 04), aislado de la base de datos. */
+/** Contrato HTTP de /api/personas, aislado de la base de datos (los casos de uso se simulan). */
 @WebMvcTest(PersonaController.class)
 class PersonaControllerTest {
 
@@ -40,11 +41,14 @@ class PersonaControllerTest {
     private MockMvc mvc;
 
     @MockitoBean
-    private PersonaService service;
+    private RegistrarPersonaUseCase registrar;
+
+    @MockitoBean
+    private ConsultarPersonaUseCase consultar;
 
     @Test
     void postValidoDevuelve201ConElRecurso() throws Exception {
-        when(service.registrar(any())).thenReturn(MARIA);
+        when(registrar.registrar(any())).thenReturn(MARIA);
 
         mvc.perform(post("/api/personas").contentType(MediaType.APPLICATION_JSON).content(VALIDA))
                 .andExpect(status().isCreated())
@@ -58,7 +62,7 @@ class PersonaControllerTest {
         mvc.perform(post("/api/personas").contentType(MediaType.APPLICATION_JSON)
                         .content(VALIDA.replace("\"Maria\"", "\"  \"")))
                 .andExpect(status().isBadRequest());
-        verify(service, never()).registrar(any());
+        verify(registrar, never()).registrar(any());
     }
 
     @Test
@@ -66,12 +70,12 @@ class PersonaControllerTest {
         mvc.perform(post("/api/personas").contentType(MediaType.APPLICATION_JSON)
                         .content(VALIDA.replace("Maria.Lopez@CondoFlow.com", "no-es-un-correo")))
                 .andExpect(status().isBadRequest());
-        verify(service, never()).registrar(any());
+        verify(registrar, never()).registrar(any());
     }
 
     @Test
     void getListaDevuelve200ConArreglo() throws Exception {
-        when(service.listar(isNull())).thenReturn(List.of(MARIA));
+        when(consultar.listar(isNull())).thenReturn(List.of(MARIA));
 
         mvc.perform(get("/api/personas"))
                 .andExpect(status().isOk())
@@ -80,7 +84,7 @@ class PersonaControllerTest {
 
     @Test
     void getPorIdExistenteDevuelve200() throws Exception {
-        when(service.buscarPorId(1L)).thenReturn(Optional.of(MARIA));
+        when(consultar.buscarPorId(1L)).thenReturn(Optional.of(MARIA));
 
         mvc.perform(get("/api/personas/1"))
                 .andExpect(status().isOk())
@@ -89,19 +93,19 @@ class PersonaControllerTest {
 
     @Test
     void getPorIdInexistenteDevuelve404() throws Exception {
-        when(service.buscarPorId(999L)).thenReturn(Optional.empty());
+        when(consultar.buscarPorId(999L)).thenReturn(Optional.empty());
 
         mvc.perform(get("/api/personas/999"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    void getConParametroBuscarLoEnviaAlServicio() throws Exception {
-        when(service.listar("rojas")).thenReturn(List.of());
+    void getConParametroBuscarLoEnviaAlCasoDeUso() throws Exception {
+        when(consultar.listar("rojas")).thenReturn(List.of());
 
         mvc.perform(get("/api/personas").param("buscar", "rojas"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
-        verify(service).listar("rojas");
+        verify(consultar).listar("rojas");
     }
 }
