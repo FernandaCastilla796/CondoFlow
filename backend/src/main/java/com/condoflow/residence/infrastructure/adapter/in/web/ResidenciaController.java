@@ -42,6 +42,13 @@ public class ResidenciaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ResidenciaWebMapper.toResponse(creada));
     }
 
+    @GetMapping
+    public List<ResidenciaResponse> listar() {
+        return consultarUseCase.listar().stream()
+                .map(ResidenciaWebMapper::toResponse)
+                .toList();
+    }
+
     @GetMapping("/{id}")
     public ResidenciaResponse buscarPorId(@PathVariable Long id) {
         return consultarUseCase.buscarPorId(id)

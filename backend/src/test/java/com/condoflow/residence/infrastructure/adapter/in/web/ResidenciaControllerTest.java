@@ -128,6 +128,16 @@ class ResidenciaControllerTest {
     }
 
     @Test
+    void listarTodasDevuelve200ConArreglo() throws Exception {
+        when(consultar.listar()).thenReturn(List.of(CREADA));
+
+        mvc.perform(get("/api/residencias"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].residenciaId").value(3));
+    }
+
+    @Test
     void listarPorPersonaDevuelve200() throws Exception {
         when(consultar.listarPorPersona(1L)).thenReturn(List.of(CREADA));
 

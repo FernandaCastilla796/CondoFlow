@@ -2,9 +2,10 @@
 
 - Base: `http://localhost:8080`
 - Documentación interactiva: `http://localhost:8080/swagger-ui.html` (OpenAPI en `/v3/api-docs`)
-- Colección de Postman: [`CondoFlow.postman_collection.json`](CondoFlow.postman_collection.json). En Postman: *Import* → elegir el archivo → *Run collection*. Tiene 20 peticiones y cada una verifica su código HTTP esperado.
+- Colección de Postman: [`CondoFlow.postman_collection.json`](CondoFlow.postman_collection.json). En Postman: *Import* → elegir el archivo → *Run collection*. Tiene 22 peticiones y cada una verifica su código HTTP esperado.
 - Pruebas manuales en IntelliJ: [`backend/requests.http`](../../backend/requests.http)
 - Formato: JSON. Fechas en ISO `AAAA-MM-DD`.
+- CORS: el navegador sólo puede leer las respuestas de `/api/**` desde el origen del frontend en desarrollo, `http://localhost:5173` (`shared/web/WebConfig`, Guía 05 del frontend). Otro origen recibe `403 Invalid CORS request`. Postman no aplica CORS porque no es un navegador.
 
 ## Formato de error (todas las respuestas 4xx y 5xx)
 
@@ -69,6 +70,7 @@
 | Método | Ruta | Entrada | Salida | Status |
 |---|---|---|---|---|
 | POST | `/api/residencias` | `CrearResidenciaRequest` | `ResidenciaResponse` | 201 / 400 / 404 / 409 |
+| GET | `/api/residencias` | — | `ResidenciaResponse[]` ordenadas por id | 200 |
 | GET | `/api/residencias/{id}` | — | `ResidenciaResponse` | 200 / 404 |
 | GET | `/api/residencias/persona/{personaId}` | — | `ResidenciaResponse[]` (más recientes primero) | 200 / 404 |
 

@@ -68,6 +68,12 @@ public class ResidenciaService implements RegistrarResidenciaUseCase, ConsultarR
 
     @Override
     @Transactional(readOnly = true)
+    public List<Residencia> listar() {
+        return repositoryPort.listar();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Residencia> listarPorPersona(Long personaId) {
         if (consultarPersona.buscarPorId(personaId).isEmpty()) {
             throw new PersonaNoEncontradaException(personaId);

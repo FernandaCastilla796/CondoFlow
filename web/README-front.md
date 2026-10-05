@@ -25,8 +25,8 @@ npm run dev
 
 1. **`features/`**: guarda todo lo que pertenece a un módulo del negocio. `features/personas` y `features/residencias` tienen cada una sus componentes, páginas, servicios y tipos. Si hay que cambiar algo de residencias, sólo se trabaja dentro de esa carpeta.
 2. **`components/common/`**: es para piezas visuales que se pueden reutilizar en cualquier pantalla porque no dependen de un módulo, como un botón o un mensaje de error. `PersonaCard` no va aquí porque sólo sirve para personas.
-3. **`services/http/`**: aquí irá el código común para comunicarse con el backend de Spring Boot. Así la forma de llamar a la API se define en un solo lugar y no en cada pantalla.
-4. **`config/`**: sirve para leer la configuración general, por ejemplo la URL del backend que se define en `VITE_API_BASE_URL`. Ahí nunca van contraseñas, porque todo el código del frontend termina en el navegador.
+3. **`services/http/`**: aquí irá el código común para comunicarse con el backend de Spring Boot. Así la forma de llamar a la API se define en un solo lugar y no en cada pantalla. *(Desde la Guía 05 ese código vive en `src/api/apiClient.ts`, la carpeta que indica esa guía.)*
+4. **`config/`**: sirve para leer la configuración general, por ejemplo la URL del backend que se define en `VITE_API_BASE_URL` *(desde la Guía 05, `VITE_API_URL`)*. Ahí nunca van contraseñas, porque todo el código del frontend termina en el navegador.
 5. **`routes/`**: aquí se van a definir las rutas de la aplicación cuando se instale React Router en la siguiente guía.
 
 ### Práctica obligatoria
@@ -200,3 +200,80 @@ Formularios **controlados** con `useState`: el valor de cada campo sale del esta
 - [x] Reto avanzado: envío simulado de 500 ms; mientras dura, el botón dice "Guardando..." y queda deshabilitado.
 - [x] Contador de errores al intentar guardar ("El formulario tiene N error(es).").
 - [x] **Por qué la validación del frontend no reemplaza a la del backend**: el frontend corre en el navegador del usuario, que puede modificar el código o saltarlo mandando la petición directo con Postman o curl. Además, hay reglas que el navegador no puede saber, como si el correo ya está registrado o si la persona ya tiene una residencia vigente en esa unidad. Por eso la validación del frontend sólo da respuesta rápida al usuario; la que protege los datos es la de Spring Boot (`@Valid` y reglas del servicio) y la de PostgreSQL (NOT NULL, UNIQUE, CHECK, FK).
+
+---
+
+## Guía 05 — Conexión React ↔ Spring Boot
+
+Los datos simulados se reemplazaron por peticiones HTTP reales a la API. Los archivos `*.mock.ts` se eliminaron porque dejaron de ser el origen de los datos (quedan en el historial de Git, commit de la Guía 03).
+
+### Contrato confirmado en Swagger
+
+| Dato | CondoFlow |
+|---|---|
+| Puerto del backend | `http://localhost:8080` |
+| Personas | `GET /api/personas` (200 + `Persona[]`), `POST /api/personas` (201 + persona creada) |
+| Residencias | `GET /api/residencias` (200 + `Residencia[]`), `POST /api/residencias` (201) |
+| Unidades | `GET /api/unidades` (200 + `Unidad[]`) para el selector |
+| JSON de `POST /api/personas` | `nombre`, `apellido`, `documento`, `telefono`, `correoElectronico` (sin id ni estado) |
+| JSON de `POST /api/residencias` | `personaId`, `unidadId`, `tipoResidencia`, `fechaInicio`: la relación viaja como **`personaId`**, no como objeto `persona: { id }` |
+| Errores | Formato `ApiError` del backend: `status`, `message`, `path`, `fieldErrors` |
+
+### Qué se agregó
+
+| Archivo | Responsabilidad |
+|---|---|
+| `.env.development` | `VITE_API_URL=http://localhost:8080/api`. Es una URL pública, no un secreto, por eso se versiona (excepción en `.gitignore`). |
+| `.env.example` | Plantilla con la misma variable. |
+| `src/vite-env.d.ts` | Tipa `import.meta.env.VITE_API_URL`. |
+| `src/api/apiClient.ts` | **Una sola puerta HTTP**: URL base, `Content-Type: application/json`, `response.ok`, 204 y errores. La guía ubica el cliente HTTP en `src/api/`, por eso se quitó la carpeta vacía `services/http/` de la Guía 01. |
+| `features/*/services/*Service.ts` | `personaService`, `residenciaService` y `unidadService`: conocen los endpoints; los componentes sólo llaman `listar()` o `crear()`. |
+| `features/*/types/*CreateRequest.ts` | Cuerpo exacto de cada POST. `PersonaCreateRequest` omite `personaId` **y** `estado`, porque el DTO del backend no los recibe. |
+| Backend `shared/web/WebConfig.java` | CORS para el origen `http://localhost:5173` (decisión D-15). |
+| Backend `GET /api/residencias` | Listado completo de residencias para la pantalla. |
+
+**Mejora sobre la guía en `apiClient`.** Además de lanzar `ApiError` con el `status`, se lee el JSON de error del backend para mostrar su `message` (por ejemplo, *"Ya existe una persona registrada con el correo …"*) y sus `fieldErrors`, que el formulario pinta junto a cada campo. Si `fetch` no obtiene respuesta (backend apagado o CORS), el mensaje lo dice explícitamente.
+
+### Estados de la interfaz
+
+| Estado | Qué ve el usuario |
+|---|---|
+| `loading` (GET) | "Cargando personas..." / "Cargando residencias..." en lugar de una tabla vacía. |
+| `submitting` (POST) | El botón dice "Guardando..." y queda deshabilitado: evita un doble POST. |
+| error HTTP | Mensaje visible en rojo con el `message` del backend. |
+| éxito | "Persona creada correctamente." y la fila nueva aparece con el **id que devolvió el backend**. |
+
+En `ResidenciasPage` las residencias, las personas y las unidades se piden **una sola vez y en paralelo** con `Promise.all`; la tabla resuelve el nombre de la persona y el número de unidad en memoria, sin una petición por fila.
+
+### Evidencias (DevTools → Network)
+
+| Acción | Petición | Resultado |
+|---|---|---|
+| Abrir `/personas` | `GET /api/personas` | 200 con las personas de PostgreSQL |
+| Crear persona | `OPTIONS` (preflight) + `POST /api/personas` | 200 + **201**; la fila aparece con su `personaId` |
+| Crear con correo de otra persona | `POST /api/personas` | **409** "Ya existe una persona registrada con el correo maria.lopez@condoflow.com" |
+| Crear residencia | `POST /api/residencias` con `personaId` numérico | **201** |
+| Repetir la misma residencia vigente | `POST /api/residencias` | **409** "La persona 3 ya tiene una residencia vigente en la unidad 1" |
+
+En desarrollo aparecen GET cancelados (`ERR_ABORTED`) seguidos de un GET 200: `StrictMode` monta el componente dos veces y el `AbortController` del `useEffect` cancela la primera petición.
+
+### Tres fallos intencionales y su diagnóstico
+
+| Fallo provocado | Qué se observa | Diagnóstico |
+|---|---|---|
+| URL incorrecta (`/api/personaz`) | **404** `"La ruta solicitada no existe"` | Comparar el endpoint del service con Swagger. |
+| Origen no permitido (`Origin: http://localhost:3000`) | **403** `Invalid CORS request` (en el navegador: error CORS en la consola y la respuesta bloqueada) | Revisar `allowedOrigins` en `WebConfig`. |
+| Body inválido (`tipoResidencia: "ALQUILER"`) | **400** `"El cuerpo de la solicitud no es un JSON válido o contiene un valor no permitido"` | Comparar el Request Payload con `CrearResidenciaRequest`. |
+
+### Práctica evaluada
+
+- [x] `VITE_API_URL` creada y leída desde React.
+- [x] CORS sólo para el origen de desarrollo `http://localhost:5173`.
+- [x] `apiClient` reutilizable con `response.ok` y errores HTTP.
+- [x] Services para personas y residencias (y unidades para el selector).
+- [x] Mocks reemplazados por GET real en ambos listados.
+- [x] POST de la entidad padre (persona) y de la entidad hija (residencia).
+- [x] La relación se envía como `personaId`, igual que en el contrato de Swagger.
+- [x] Estados `loading`, `error` y `submitting` visibles.
+- [x] Tres fallos intencionales diagnosticados (tabla anterior).
+- [x] Evidencias de Network: GET y POST exitosos.

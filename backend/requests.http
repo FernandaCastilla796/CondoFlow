@@ -127,6 +127,13 @@ Content-Type: application/json
   "unidadId": 1
 }
 
+### Listar todas las residencias -> 200 (Guía 05 del frontend)
+GET http://localhost:8080/api/residencias
+
+### CORS: el origen de Vite recibe Access-Control-Allow-Origin
+GET http://localhost:8080/api/residencias
+Origin: http://localhost:5173
+
 ### Consultar residencia -> 200
 GET http://localhost:8080/api/residencias/1
 

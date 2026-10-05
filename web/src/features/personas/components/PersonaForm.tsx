@@ -1,6 +1,13 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { ApiError } from '../../../api/apiClient';
+import type { Persona } from '../models/Persona';
+import { personaService } from '../services/personaService';
 import type { PersonaFormData } from '../types/PersonaFormData';
 import { validarPersona, type PersonaFormErrors } from '../utils/personaValidation';
+
+interface PersonaFormProps {
+  onCreated?: (persona: Persona) => void;
+}
 
 const initialPersonaForm: PersonaFormData = {
   nombre: '',
@@ -11,11 +18,12 @@ const initialPersonaForm: PersonaFormData = {
 };
 
 // Formulario controlado: cada input lee su valor de formData y lo actualiza con onChange.
-export default function PersonaForm() {
+export default function PersonaForm({ onCreated }: PersonaFormProps) {
   const [formData, setFormData] = useState<PersonaFormData>(initialPersonaForm);
   const [errors, setErrors] = useState<PersonaFormErrors>({});
   const [mensaje, setMensaje] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [apiError, setApiError] = useState('');
 
   const cantidadErrores = Object.keys(errors).length;
 
@@ -28,12 +36,13 @@ export default function PersonaForm() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMensaje('');
+    setApiError('');
 
     const validationErrors = validarPersona(formData);
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
 
-    const personaPayload = {
+    const payload = {
       nombre: formData.nombre.trim(),
       apellido: formData.apellido.trim(),
       documento: formData.documento.trim().toUpperCase(),
@@ -41,19 +50,27 @@ export default function PersonaForm() {
       correoElectronico: formData.correoElectronico.trim().toLowerCase(),
     };
 
-    // Envío simulado de 500 ms (reto de la práctica): el botón queda deshabilitado mientras dura.
-    setSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    setSubmitting(false);
-
-    console.log('Persona lista para API:', personaPayload);
-    setMensaje('Datos válidos. Persona lista para enviarse al backend.');
+    try {
+      // submitting deshabilita el botón: evita un doble POST por doble clic.
+      setSubmitting(true);
+      const creada = await personaService.crear(payload);
+      onCreated?.(creada);
+      setFormData(initialPersonaForm);
+      setMensaje('Persona creada correctamente.');
+    } catch (err) {
+      // 400 del backend: sus fieldErrors usan los mismos nombres que los campos del formulario.
+      if (err instanceof ApiError) setErrors(err.fieldErrors as PersonaFormErrors);
+      setApiError(err instanceof Error ? err.message : 'No se pudo crear la persona');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const limpiar = () => {
     setFormData(initialPersonaForm);
     setErrors({});
     setMensaje('');
+    setApiError('');
   };
 
   return (
@@ -93,6 +110,7 @@ export default function PersonaForm() {
       {cantidadErrores > 0 && (
         <div className="form-error-count">El formulario tiene {cantidadErrores} error(es).</div>
       )}
+      {apiError && <div className="form-error">{apiError}</div>}
       {mensaje && <div className="form-success">{mensaje}</div>}
 
       <div className="form-actions">

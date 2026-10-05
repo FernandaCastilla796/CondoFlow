@@ -145,6 +145,17 @@ Las siguientes decisiones se resolverán en las clases posteriores:
    - Commits con prefijos `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
 5. **Consecuencias:** el historial de Git sirve como evidencia de colaboración.
 
+### D-15 — Conexión del frontend con la API (CORS y URL base)
+
+1. **Contexto:** Guía 05 del frontend: React (Vite, `http://localhost:5173`) consume la API de Spring Boot (`http://localhost:8080`).
+2. **Problema:** son orígenes distintos (cambia el puerto), así que el navegador bloquea las respuestas si el backend no lo autoriza; y la URL de la API no debe repetirse en cada componente.
+3. **Alternativas consideradas:** `@CrossOrigin` en cada controller; configuración global de CORS; proxy de Vite.
+4. **Decisión tomada:**
+   - CORS global en `shared/web/WebConfig` para `/api/**`, sólo para el origen `http://localhost:5173` y los métodos GET, POST, PUT, DELETE y OPTIONS.
+   - La URL base vive en `web/.env.development` (`VITE_API_URL`) y la usa un único `apiClient`; los componentes llaman a services, nunca a `fetch` directamente.
+   - `GET /api/residencias` lista todas las residencias para la pantalla del frontend.
+5. **Consecuencias:** en producción hay que autorizar el dominio real del frontend. CORS no autentica usuarios: la autenticación sigue pendiente. Las variables `VITE_` llegan al navegador, por eso no guardan secretos.
+
 ## 5. Deuda técnica conocida
 
 - Autenticación y roles (RF-01, RN-06) todavía no implementados.

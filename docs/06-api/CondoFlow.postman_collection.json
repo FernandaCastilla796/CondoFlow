@@ -21,6 +21,11 @@
           "name": "Demo persona -> 200",
           "event": [{ "listen": "test", "script": { "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] } }],
           "request": { "method": "GET", "url": "{{baseUrl}}/api/personas/demo" }
+        },
+        {
+          "name": "CORS desde el origen de Vite -> 200 + Access-Control-Allow-Origin",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));", "pm.test('autoriza el origen de Vite', () => pm.expect(pm.response.headers.get('Access-Control-Allow-Origin')).to.eql('http://localhost:5173'));"] } }],
+          "request": { "method": "GET", "header": [{ "key": "Origin", "value": "http://localhost:5173" }], "url": "{{baseUrl}}/api/health" }
         }
       ]
     },
@@ -159,6 +164,11 @@
             "url": "{{baseUrl}}/api/residencias",
             "body": { "mode": "raw", "raw": "{\n  \"unidadId\": 1\n}" }
           }
+        },
+        {
+          "name": "Listar residencias -> 200",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));", "pm.test('es arreglo', () => pm.expect(pm.response.json()).to.be.an('array'));"] } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/residencias" }
         },
         {
           "name": "Consultar residencia -> 200",

@@ -64,6 +64,7 @@ Construir una plataforma web y móvil que permita centralizar la administración
 | Frontend Guía 02: React Router, layout principal y menú | ✅ |
 | Frontend Guía 03: modelos TypeScript, datos simulados y tablas | ✅ |
 | Frontend Guía 04: formularios controlados con validación | ✅ |
+| Frontend Guía 05: conexión con la API (CORS, `apiClient`, services, GET y POST reales) | ✅ |
 | Móvil, autenticación y resto de módulos | ⬜ próximas clases |
 
 ## 8. Documentación
@@ -121,13 +122,15 @@ Cambiar la contraseña de ejemplo y no subirla a GitHub. Las tablas no se crean 
 
 ### Web
 
+Con el backend levantado:
+
 ```bash
 cd web
 npm install
 npm run dev
 ```
 
-Abrir http://localhost:5173.
+Abrir http://localhost:5173. La URL de la API se toma de `web/.env.development` (`VITE_API_URL=http://localhost:8080/api`).
 
 ### Docker Compose (alternativa)
 
