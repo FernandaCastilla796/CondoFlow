@@ -100,3 +100,29 @@ button:disabled {
   .form-span-2 { grid-column: auto; }
   .form-actions { flex-direction: column-reverse; }
 }
+
+/* ===== Guía 06: acciones del CRUD ===== */
+.form-title { margin: 0 0 18px; font-size: 1.15rem; }
+
+.actions-cell {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-small {
+  min-height: 34px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  font-size: .85rem;
+}
+
+.btn-danger {
+  border: 1px solid #dc2626;
+  background: #ffffff;
+  color: #b91c1c;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-danger:hover { background: #fef2f2; }

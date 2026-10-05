@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { ApiError } from '../../../api/apiClient';
 import type { Persona } from '../models/Persona';
 import { personaService } from '../services/personaService';
@@ -6,7 +6,9 @@ import type { PersonaFormData } from '../types/PersonaFormData';
 import { validarPersona, type PersonaFormErrors } from '../utils/personaValidation';
 
 interface PersonaFormProps {
-  onCreated?: (persona: Persona) => void;
+  persona?: Persona | null;
+  onSaved: (persona: Persona, mode: 'create' | 'edit') => void;
+  onCancelEdit?: () => void;
 }
 
 const initialPersonaForm: PersonaFormData = {
@@ -15,22 +17,48 @@ const initialPersonaForm: PersonaFormData = {
   documento: '',
   telefono: '',
   correoElectronico: '',
+  activo: true,
 };
 
-// Formulario controlado: cada input lee su valor de formData y lo actualiza con onChange.
-export default function PersonaForm({ onCreated }: PersonaFormProps) {
+// Un solo formulario para crear y editar (Guía 06). Si recibe una persona, está en modo edición.
+export default function PersonaForm({ persona, onSaved, onCancelEdit }: PersonaFormProps) {
   const [formData, setFormData] = useState<PersonaFormData>(initialPersonaForm);
   const [errors, setErrors] = useState<PersonaFormErrors>({});
   const [mensaje, setMensaje] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [apiError, setApiError] = useState('');
 
+  const isEditing = persona != null;
   const cantidadErrores = Object.keys(errors).length;
 
+  // Sincroniza el estado editable cuando cambia la prop persona. No hace ninguna petición HTTP.
+  // La Guía 06 usa este Effect a propósito; la alternativa que sugiere el linter es remontar el
+  // formulario con una key distinta por persona.
+  /* oxlint-disable react/set-state-in-effect */
+  useEffect(() => {
+    if (persona) {
+      setFormData({
+        nombre: persona.nombre,
+        apellido: persona.apellido,
+        documento: persona.documento,
+        telefono: persona.telefono,
+        correoElectronico: persona.correoElectronico,
+        activo: persona.estado === 'ACTIVO',
+      });
+    } else {
+      setFormData(initialPersonaForm);
+    }
+    setErrors({});
+    setMensaje('');
+    setApiError('');
+  }, [persona]);
+  /* oxlint-enable react/set-state-in-effect */
+
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     // No se muta formData: se crea un objeto nuevo copiando el anterior.
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    // El checkbox usa checked (true/false); los demás inputs usan value (texto).
+    setFormData((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -42,7 +70,7 @@ export default function PersonaForm({ onCreated }: PersonaFormProps) {
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
 
-    const payload = {
+    const datos = {
       nombre: formData.nombre.trim(),
       apellido: formData.apellido.trim(),
       documento: formData.documento.trim().toUpperCase(),
@@ -51,18 +79,26 @@ export default function PersonaForm({ onCreated }: PersonaFormProps) {
     };
 
     try {
-      // submitting deshabilita el botón: evita un doble POST por doble clic.
-      setSubmitting(true);
-      const creada = await personaService.crear(payload);
-      onCreated?.(creada);
-      setFormData(initialPersonaForm);
-      setMensaje('Persona creada correctamente.');
+      setSaving(true);
+      // POST o PUT no depende del texto del botón, sino de si existe una persona persistida con id.
+      if (persona) {
+        const actualizada = await personaService.actualizar(persona.personaId, {
+          ...datos,
+          estado: formData.activo ? 'ACTIVO' : 'INACTIVO',
+        });
+        onSaved(actualizada, 'edit');
+      } else {
+        const creada = await personaService.crear(datos);
+        onSaved(creada, 'create');
+        setFormData(initialPersonaForm);
+        setMensaje('Persona creada correctamente.');
+      }
     } catch (err) {
       // 400 del backend: sus fieldErrors usan los mismos nombres que los campos del formulario.
       if (err instanceof ApiError) setErrors(err.fieldErrors as PersonaFormErrors);
-      setApiError(err instanceof Error ? err.message : 'No se pudo crear la persona');
+      setApiError(err instanceof Error ? err.message : 'No se pudo guardar la persona');
     } finally {
-      setSubmitting(false);
+      setSaving(false);
     }
   };
 
@@ -75,6 +111,8 @@ export default function PersonaForm({ onCreated }: PersonaFormProps) {
 
   return (
     <form className="entity-form" onSubmit={handleSubmit} noValidate>
+      <h2 className="form-title">{isEditing ? `Editar persona #${persona.personaId}` : 'Nueva persona'}</h2>
+
       <div className="form-grid">
         <label>
           Nombre
@@ -105,6 +143,14 @@ export default function PersonaForm({ onCreated }: PersonaFormProps) {
           <input type="email" name="correoElectronico" value={formData.correoElectronico} onChange={handleChange} />
           {errors.correoElectronico && <small className="field-error">{errors.correoElectronico}</small>}
         </label>
+
+        {/* El estado sólo se cambia al editar: desmarcarlo es la baja lógica (INACTIVO). */}
+        {isEditing && (
+          <label className="checkbox-field form-span-2">
+            <input type="checkbox" name="activo" checked={formData.activo} onChange={handleChange} />
+            Persona activa
+          </label>
+        )}
       </div>
 
       {cantidadErrores > 0 && (
@@ -114,11 +160,17 @@ export default function PersonaForm({ onCreated }: PersonaFormProps) {
       {mensaje && <div className="form-success">{mensaje}</div>}
 
       <div className="form-actions">
-        <button type="button" className="btn-secondary" onClick={limpiar} disabled={submitting}>
-          Limpiar
-        </button>
-        <button type="submit" className="btn-primary" disabled={submitting}>
-          {submitting ? 'Guardando...' : 'Guardar persona'}
+        {isEditing ? (
+          <button type="button" className="btn-secondary" onClick={onCancelEdit} disabled={saving}>
+            Cancelar edición
+          </button>
+        ) : (
+          <button type="button" className="btn-secondary" onClick={limpiar} disabled={saving}>
+            Limpiar
+          </button>
+        )}
+        <button type="submit" className="btn-primary" disabled={saving}>
+          {saving ? 'Guardando...' : isEditing ? 'Actualizar persona' : 'Crear persona'}
         </button>
       </div>
     </form>

@@ -12,6 +12,9 @@ public interface SpringDataPersonaRepository extends JpaRepository<PersonaJpaEnt
     /** Respalda la regla UNIQUE de persona.correo_electronico antes de insertar. */
     boolean existsByCorreoElectronico(String correoElectronico);
 
+    /** Consulta derivada: el correo existe en una persona con otro id (para el PUT). */
+    boolean existsByCorreoElectronicoAndIdNot(String correoElectronico, Long id);
+
     /** Filtro de GET /api/personas?filtro=... por nombre completo o correo. */
     @Query("""
             select p from PersonaJpaEntity p

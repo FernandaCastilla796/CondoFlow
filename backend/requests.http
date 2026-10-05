@@ -61,6 +61,38 @@ GET http://localhost:8080/api/personas/1
 ### Buscar persona inexistente -> 404
 GET http://localhost:8080/api/personas/999
 
+### Actualizar persona (PUT, representación completa) -> 200 (Guía 06 del frontend)
+PUT http://localhost:8080/api/personas/2
+Content-Type: application/json
+
+{
+  "nombre": "Carlos",
+  "apellido": "Rojas",
+  "documento": "6231457",
+  "telefono": "+591 70000002",
+  "correoElectronico": "carlos.rojas@condoflow.com",
+  "estado": "ACTIVO"
+}
+
+### Actualizar con el correo de otra persona -> 409
+PUT http://localhost:8080/api/personas/2
+Content-Type: application/json
+
+{
+  "nombre": "Carlos",
+  "apellido": "Rojas",
+  "documento": "6231457",
+  "telefono": "+591 70000002",
+  "correoElectronico": "maria.lopez@condoflow.com",
+  "estado": "ACTIVO"
+}
+
+### Eliminar persona con residencias -> 409 (usar PUT con estado INACTIVO: baja lógica)
+DELETE http://localhost:8080/api/personas/1
+
+### Eliminar persona inexistente -> 404
+DELETE http://localhost:8080/api/personas/999
+
 ##############################################################
 # UNIDADES
 ##############################################################

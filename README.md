@@ -65,6 +65,7 @@ Construir una plataforma web y móvil que permita centralizar la administración
 | Frontend Guía 03: modelos TypeScript, datos simulados y tablas | ✅ |
 | Frontend Guía 04: formularios controlados con validación | ✅ |
 | Frontend Guía 05: conexión con la API (CORS, `apiClient`, services, GET y POST reales) | ✅ |
+| Frontend Guía 06: CRUD completo de Persona (PUT y DELETE en el backend) | ✅ |
 | Móvil, autenticación y resto de módulos | ⬜ próximas clases |
 
 ## 8. Documentación
