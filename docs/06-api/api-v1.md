@@ -2,7 +2,7 @@
 
 - Base: `http://localhost:8080`
 - Documentación interactiva: `http://localhost:8080/swagger-ui.html` (OpenAPI en `/v3/api-docs`)
-- Colección de Postman: [`CondoFlow.postman_collection.json`](CondoFlow.postman_collection.json). En Postman: *Import* → elegir el archivo → *Run collection*. Tiene 27 peticiones y cada una verifica su código HTTP esperado.
+- Colección de Postman: [`CondoFlow.postman_collection.json`](CondoFlow.postman_collection.json). En Postman: *Import* → elegir el archivo → *Run collection*. Tiene 33 peticiones y cada una verifica su código HTTP esperado. Al final elimina la residencia y la persona que creó, así que se puede ejecutar varias veces.
 - Pruebas manuales en IntelliJ: [`backend/requests.http`](../../backend/requests.http)
 - Formato: JSON. Fechas en ISO `AAAA-MM-DD`.
 - CORS: el navegador sólo puede leer las respuestas de `/api/**` desde el origen del frontend en desarrollo, `http://localhost:5173` (`shared/web/WebConfig`, Guía 05 del frontend). Otro origen recibe `403 Invalid CORS request`. Postman no aplica CORS porque no es un navegador.
@@ -83,6 +83,8 @@ Errores de negocio:
 | GET | `/api/residencias` | — | `ResidenciaResponse[]` ordenadas por id | 200 |
 | GET | `/api/residencias/{id}` | — | `ResidenciaResponse` | 200 / 404 |
 | GET | `/api/residencias/persona/{personaId}` | — | `ResidenciaResponse[]` (más recientes primero) | 200 / 404 |
+| PUT | `/api/residencias/{id}` | `ActualizarResidenciaRequest` | `ResidenciaResponse` | 200 / 400 / 404 / 409 |
+| DELETE | `/api/residencias/{id}` | — | sin cuerpo | 204 / 404 |
 
 `CrearResidenciaRequest`
 
@@ -97,5 +99,23 @@ Errores de negocio:
 
 - **404** si la persona o la unidad no existen.
 - **409** si la persona ya tiene una residencia `VIGENTE` en esa unidad.
+
+`ActualizarResidenciaRequest` (representación completa; el id va en la URL)
+
+| Campo | Tipo | Reglas |
+|---|---|---|
+| `personaId` | number | obligatorio; puede ser **otra persona** (reasigna la residencia); debe existir (404) |
+| `unidadId` | number | obligatorio; debe existir (404) |
+| `tipoResidencia` | `PROPIETARIO` \| `INQUILINO` | obligatorio |
+| `fechaInicio` | date | obligatoria |
+| `fechaFin` | date \| null | `null` si está `VIGENTE`; obligatoria si está `FINALIZADA` y no anterior a `fechaInicio` (400) |
+| `estado` | `VIGENTE` \| `FINALIZADA` | obligatorio |
+
+Errores de negocio del PUT y el DELETE:
+
+- **400** si el estado y la fecha de fin no son coherentes (regla RN-01 del dominio, igual que el CHECK `ck_residencia_estado_fecha_fin`).
+- **404** si la residencia, la persona o la unidad no existen.
+- **409** si el cambio deja a la persona con dos residencias `VIGENTE` en la misma unidad.
+- El DELETE no tiene conflicto de FK: ninguna tabla referencia a `residencia`.
 
 `ResidenciaResponse`: `residenciaId`, `personaId`, `unidadId`, `tipoResidencia`, `fechaInicio`, `fechaFin` (`null` si está vigente), `estado` (`VIGENTE` \| `FINALIZADA`).

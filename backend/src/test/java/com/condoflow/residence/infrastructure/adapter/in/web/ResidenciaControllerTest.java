@@ -1,11 +1,14 @@
 package com.condoflow.residence.infrastructure.adapter.in.web;
 
 import com.condoflow.person.domain.exception.PersonaNoEncontradaException;
+import com.condoflow.residence.domain.exception.ResidenciaNoEncontradaException;
 import com.condoflow.residence.domain.exception.ResidenciaVigenteDuplicadaException;
 import com.condoflow.residence.domain.model.EstadoResidencia;
 import com.condoflow.residence.domain.model.Residencia;
 import com.condoflow.residence.domain.model.TipoResidencia;
+import com.condoflow.residence.domain.port.in.ActualizarResidenciaUseCase;
 import com.condoflow.residence.domain.port.in.ConsultarResidenciaUseCase;
+import com.condoflow.residence.domain.port.in.EliminarResidenciaUseCase;
 import com.condoflow.residence.domain.port.in.RegistrarResidenciaUseCase;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,11 +24,15 @@ import java.util.Optional;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -50,6 +57,15 @@ class ResidenciaControllerTest {
     private RegistrarResidenciaUseCase registrar;
     @MockitoBean
     private ConsultarResidenciaUseCase consultar;
+    @MockitoBean
+    private ActualizarResidenciaUseCase actualizar;
+    @MockitoBean
+    private EliminarResidenciaUseCase eliminar;
+
+    private static final String ACTUALIZAR = """
+            {"personaId":2,"unidadId":1,"tipoResidencia":"INQUILINO","fechaInicio":"2026-09-01",
+             "fechaFin":null,"estado":"VIGENTE"}
+            """;
 
     @Test
     void registroValidoDevuelve201() throws Exception {
@@ -144,5 +160,71 @@ class ResidenciaControllerTest {
         mvc.perform(get("/api/residencias/persona/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
+    }
+
+    // ===== Guía 07 del frontend: PUT (incluye reasignar la persona) y DELETE =====
+
+    @Test
+    void putQueReasignaLaPersonaDevuelve200() throws Exception {
+        Residencia reasignada = new Residencia(3L, 2L, 1L, TipoResidencia.INQUILINO,
+                LocalDate.of(2026, 9, 1), null, EstadoResidencia.VIGENTE);
+        when(actualizar.actualizar(eq(3L), any())).thenReturn(reasignada);
+
+        mvc.perform(put("/api/residencias/3").contentType(MediaType.APPLICATION_JSON).content(ACTUALIZAR))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.residenciaId").value(3))
+                .andExpect(jsonPath("$.personaId").value(2));
+    }
+
+    @Test
+    void putSinEstadoDevuelve400() throws Exception {
+        mvc.perform(put("/api/residencias/3").contentType(MediaType.APPLICATION_JSON)
+                        .content(ACTUALIZAR.replace(",\"estado\":\"VIGENTE\"", "")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors.estado").exists());
+        verify(actualizar, never()).actualizar(any(), any());
+    }
+
+    @Test
+    void putFinalizadaSinFechaFinDevuelve400() throws Exception {
+        when(actualizar.actualizar(eq(3L), any()))
+                .thenThrow(new IllegalArgumentException("Una residencia finalizada necesita fecha de fin"));
+
+        mvc.perform(put("/api/residencias/3").contentType(MediaType.APPLICATION_JSON)
+                        .content(ACTUALIZAR.replace("VIGENTE", "FINALIZADA")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Una residencia finalizada necesita fecha de fin"));
+    }
+
+    @Test
+    void putConPersonaInexistenteDevuelve404() throws Exception {
+        when(actualizar.actualizar(eq(3L), any())).thenThrow(new PersonaNoEncontradaException(99L));
+
+        mvc.perform(put("/api/residencias/3").contentType(MediaType.APPLICATION_JSON).content(ACTUALIZAR))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("No existe una persona con id 99"));
+    }
+
+    @Test
+    void putQueDuplicaUnaResidenciaVigenteDevuelve409() throws Exception {
+        when(actualizar.actualizar(eq(3L), any())).thenThrow(new ResidenciaVigenteDuplicadaException(2L, 1L));
+
+        mvc.perform(put("/api/residencias/3").contentType(MediaType.APPLICATION_JSON).content(ACTUALIZAR))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void deleteExistenteDevuelve204() throws Exception {
+        mvc.perform(delete("/api/residencias/3"))
+                .andExpect(status().isNoContent());
+        verify(eliminar).eliminar(3L);
+    }
+
+    @Test
+    void deleteInexistenteDevuelve404() throws Exception {
+        doThrow(new ResidenciaNoEncontradaException(999L)).when(eliminar).eliminar(999L);
+
+        mvc.perform(delete("/api/residencias/999"))
+                .andExpect(status().isNotFound());
     }
 }

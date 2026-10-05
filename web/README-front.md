@@ -353,3 +353,85 @@ Si la persona tiene residencias, PostgreSQL rechaza el DELETE por la clave forá
 - [x] 404 real: `PUT` y `DELETE` sobre `/api/personas/999999` (colección de Postman).
 - [x] Eliminar la entidad padre con entidades hijas: **409** y la fila se conserva.
 - [x] Evidencia de Network para GET, POST, PUT y DELETE (tabla anterior).
+
+---
+
+## Guía 07 — CRUD completo de Residencia + relación Persona 1:N
+
+### Contrato REST (Swagger)
+
+| Operación | Método y ruta | Respuesta |
+|---|---|---|
+| Listar residencias | `GET /api/residencias` | 200 + `Residencia[]` |
+| Buscar | `GET /api/residencias/{id}` | 200 + `Residencia` / 404 |
+| Crear | `POST /api/residencias` | **201** / 400 / 404 / 409 |
+| Actualizar | `PUT /api/residencias/{id}` | 200 / 400 / 404 / 409 |
+| Eliminar | `DELETE /api/residencias/{id}` | **204** / 404 |
+| Personas para el selector | `GET /api/personas` | 200 + `Persona[]` |
+| Unidades para el selector | `GET /api/unidades` | 200 + `Unidad[]` |
+
+El PUT y el DELETE se agregaron al backend para esta guía (decisión D-17). El JSON expone la relación como **`personaId`**, no como un objeto `persona` anidado, así que el frontend envía y recibe `personaId`.
+
+### La relación 1:N en cada capa
+
+| Capa | Representación |
+|---|---|
+| PostgreSQL | `residencia.persona_id` referencia a `persona.persona_id` (FK `fk_residencia_persona`). |
+| JPA | `ResidenciaJpaEntity` tiene `@ManyToOne(fetch = LAZY)` hacia `PersonaJpaEntity` con `@JoinColumn(name = "persona_id")`. |
+| JSON | `personaId` dentro de `ResidenciaResponse` y de los requests. |
+| React | El formulario controla `personaId` (como texto) y la tabla resuelve el nombre de la persona con un `Map`. |
+
+Una residencia pertenece a **una sola** persona; una persona puede tener muchas residencias. El selector permite elegir exactamente una.
+
+### Qué cambió en el frontend
+
+| Archivo | Cambio |
+|---|---|
+| `types/ResidenciaRequests.ts` | `ResidenciaCreateRequest` y `ResidenciaUpdateRequest` (este último con `fechaFin` y `estado`). |
+| `types/ResidenciaFormData.ts` | Agrega `finalizada` y `fechaFin`, que sólo se usan al editar. |
+| `utils/residenciaValidation.ts` | Valida que la persona y la unidad existan y estén activas (al editar se puede conservar la actual aunque esté inactiva) y que una residencia finalizada tenga fecha de fin. |
+| `services/residenciaService.ts` | `listar`, `obtenerPorId`, `crear`, `actualizar` y `eliminar`. Para las personas se **reutiliza `personaService.listar()`**. |
+| `components/ResidenciaTable.tsx` | `Map` por id para persona y unidad (sin un GET por fila) y acciones Editar/Eliminar. |
+| `components/ResidenciaForm.tsx` | Crear y editar. Al editar se puede **cambiar la persona** (reasignar) y marcar **Residencia finalizada** con su fecha de fin. |
+| `pages/ResidenciasPage.tsx` | Carga inicial con `Promise.all`, GET/{id} antes de editar, sincronización y **filtro por persona**. |
+
+- **Select controlado**: `value={formData.personaId}` + `onChange`; no se usa `selected` en los `<option>`. El `value` de cada opción es texto y se convierte con `Number(...)` recién al armar el payload.
+- **Validación en React y en Spring**: la del frontend evita peticiones inútiles; la del backend es la que garantiza la integridad (404 si la persona no existe, 409 si se duplica una residencia vigente, y la FK de PostgreSQL).
+- **Filtro local**: `residencias.filter(r => r.personaId === Number(personaFiltro))`. La lista ya está en memoria, así que no hace falta otra petición. Con muchos datos convendría filtrar en el backend; ya existe `GET /api/residencias/persona/{personaId}` en Swagger, y no se inventa un `?personaId=` que la API no define.
+
+### Flujos
+
+| Acción | Flujo |
+|---|---|
+| Crear | Formulario → validar persona → POST → Controller → Service valida persona y unidad → JPA INSERT con la FK → JSON → `setResidencias` |
+| Reasignar persona | GET/{id} → el formulario precarga `personaId` → elegir otra persona → PUT → UPDATE de `persona_id` → respuesta → `map()` |
+| Finalizar | GET/{id} → marcar "Residencia finalizada" + fecha de fin → PUT con `estado: FINALIZADA` → UPDATE |
+| Mostrar persona | Residencias + personas → `Map` por id → la tabla muestra el nombre sin una petición por fila |
+| Filtrar | `personaFiltro` → `Number` → `filter` por `personaId` → se vuelve a renderizar sin tocar el backend |
+| Eliminar | `confirm` → DELETE/{id} → 204 → `filter`; si falla, la fila se conserva |
+
+### Evidencias (DevTools → Network)
+
+| Acción | Petición | Status / resultado |
+|---|---|---|
+| Abrir `/residencias` | `GET /api/residencias`, `/api/personas`, `/api/unidades` | 200 ×3, en paralelo; **ninguna petición por fila** |
+| Filtrar por la persona 3 | — | "Mostrando 1 de 3", sin petición |
+| Editar la residencia 3 | `GET /api/residencias/3` | 200: el formulario precarga persona, unidad, tipo y fecha |
+| Reasignarla de la persona 3 a Carlos Rojas | `PUT /api/residencias/3` con `personaId: 2` | 200: la fila muestra "Carlos Rojas" |
+| Reasignarla a Maria Lopez en A-102 (Maria ya tiene una vigente ahí) | `PUT /api/residencias/3` | **409** "La persona 1 ya tiene una residencia vigente en la unidad 1": la fila no cambia |
+| Finalizar sin fecha de fin | — | Error del frontend: "Indique la fecha de fin para finalizar la residencia." |
+| Finalizar con fin 04/10/2026 | `PUT /api/residencias/3` | 200: estado "Finalizada" |
+| Eliminar la residencia 3 | `DELETE /api/residencias/3` | **204**: la fila desaparece |
+
+### Práctica evaluada
+
+- [x] CRUD completo de la entidad hija (residencia).
+- [x] Se carga la entidad padre (personas) para un selector controlado.
+- [x] No se puede enviar una persona vacía o inválida.
+- [x] Se puede cambiar la persona durante la edición.
+- [x] La tabla muestra el nombre de la persona, no sólo su id.
+- [x] Filtro por persona.
+- [x] POST y PUT con `personaId` visibles en Network.
+- [x] Error de referencia inexistente: `PUT` con `personaId: 999999` → **404** "No existe una persona con id 999999" (colección de Postman).
+- [x] La tabla no hace una petición HTTP por fila (3 GET en total).
+- [x] Recorrido completo hasta la FK `persona_id` de PostgreSQL (tabla "La relación 1:N en cada capa").

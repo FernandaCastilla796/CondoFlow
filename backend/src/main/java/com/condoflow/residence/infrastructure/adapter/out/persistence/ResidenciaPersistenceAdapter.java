@@ -67,4 +67,15 @@ public class ResidenciaPersistenceAdapter implements ResidenciaRepositoryPort {
         return repository.existsByPersona_IdAndUnidad_IdAndEstado(
                 personaId, unidadId, EstadoResidencia.VIGENTE.name());
     }
+
+    @Override
+    public boolean existeVigenteEnOtraResidencia(Long personaId, Long unidadId, Long residenciaId) {
+        return repository.existsByPersona_IdAndUnidad_IdAndEstadoAndIdNot(
+                personaId, unidadId, EstadoResidencia.VIGENTE.name(), residenciaId);
+    }
+
+    @Override
+    public void eliminar(Long id) {
+        repository.deleteById(id);
+    }
 }

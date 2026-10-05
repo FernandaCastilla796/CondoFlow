@@ -7,6 +7,7 @@ import java.util.Optional;
 
 public interface ResidenciaRepositoryPort {
 
+    /** Inserta si la residencia no tiene id; si lo tiene, actualiza esa fila (incluida la FK persona_id). */
     Residencia guardar(Residencia residencia);
 
     Optional<Residencia> buscarPorId(Long id);
@@ -17,4 +18,9 @@ public interface ResidenciaRepositoryPort {
 
     /** Respalda el índice UNIQUE parcial uq_residencia_vigente_persona_unidad. */
     boolean existeVigente(Long personaId, Long unidadId);
+
+    /** Igual que el anterior, pero ignora a la propia residencia (para el PUT). */
+    boolean existeVigenteEnOtraResidencia(Long personaId, Long unidadId, Long residenciaId);
+
+    void eliminar(Long id);
 }
