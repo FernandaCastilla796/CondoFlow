@@ -1,6 +1,7 @@
 package com.condoflow.shared.web;
 
 import com.condoflow.person.domain.exception.CorreoPersonaDuplicadoException;
+import com.condoflow.person.domain.exception.PersonaConRegistrosAsociadosException;
 import com.condoflow.person.domain.exception.PersonaNoEncontradaException;
 import com.condoflow.residence.domain.exception.ResidenciaNoEncontradaException;
 import com.condoflow.residence.domain.exception.ResidenciaVigenteDuplicadaException;
@@ -44,6 +45,7 @@ public class GlobalExceptionHandler {
     /** 409: la petición es válida pero choca con el estado actual de los datos (regla de negocio). */
     @ExceptionHandler({
             CorreoPersonaDuplicadoException.class,
+            PersonaConRegistrosAsociadosException.class,
             ResidenciaVigenteDuplicadaException.class
     })
     public ResponseEntity<ApiError> handleConflict(RuntimeException ex, HttpServletRequest request) {

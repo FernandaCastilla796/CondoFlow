@@ -277,3 +277,79 @@ En desarrollo aparecen GET cancelados (`ERR_ABORTED`) seguidos de un GET 200: `S
 - [x] Estados `loading`, `error` y `submitting` visibles.
 - [x] Tres fallos intencionales diagnosticados (tabla anterior).
 - [x] Evidencias de Network: GET y POST exitosos.
+
+---
+
+## Guía 06 — CRUD completo de Persona
+
+### Contrato REST (Swagger)
+
+| Operación | Método y ruta | Respuesta |
+|---|---|---|
+| Listar | `GET /api/personas` | 200 + `Persona[]` |
+| Buscar | `GET /api/personas/{id}` | 200 + `Persona` / 404 |
+| Crear | `POST /api/personas` | **201** + persona creada / 400 / 409 |
+| Actualizar | `PUT /api/personas/{id}` | 200 + persona actualizada / 400 / 404 / 409 |
+| Eliminar | `DELETE /api/personas/{id}` | **204** sin cuerpo / 404 / **409** si tiene residencias |
+
+El PUT y el DELETE se agregaron al backend para esta guía (decisión D-16), con pruebas de controller y de servicio.
+
+### CRUD sobre HTTP
+
+| CRUD | HTTP | Idempotente |
+|---|---|---|
+| Read | GET | Sí: leer no cambia nada. |
+| Create | POST | No necesariamente: repetirlo crea otra persona (o da 409 por el correo). |
+| Update | PUT | Sí: repetir el mismo PUT deja a la persona igual. |
+| Delete | DELETE | Sí respecto del estado final: la persona queda eliminada. |
+
+### Qué cambió en el frontend
+
+| Archivo | Cambio |
+|---|---|
+| `types/PersonaRequests.ts` | `PersonaCreateRequest` (sin id ni estado) y `PersonaUpdateRequest` (con estado). Se nombran por intención y, en CondoFlow, además tienen formas distintas, igual que los DTO del backend. |
+| `services/personaService.ts` | `listar`, `obtenerPorId`, `crear`, `actualizar` y `eliminar`. |
+| `components/PersonaTable.tsx` | Columna **Acciones** con Editar y Eliminar. Avisa con los callbacks `onEdit` y `onDelete`; **no importa `personaService`**. |
+| `components/PersonaForm.tsx` | Un solo formulario para crear y editar. Si recibe `persona`, está en modo edición: título "Editar persona #id", casilla **Persona activa**, botón "Actualizar persona" y "Cancelar edición". |
+| `pages/PersonasPage.tsx` | `handleEdit` (GET/{id}), `handleSaved` (POST/PUT) y `handleDelete` (DELETE con confirmación). |
+
+- **GET/{id} antes de editar**: se pide una copia actual de la persona; si ya no existe, el backend responde 404 y no se abre el formulario con datos viejos.
+- **`useEffect` en el formulario**: sincroniza los campos cuando cambia la prop `persona`. No hace ninguna petición: el PUT sólo sale al presionar "Actualizar persona".
+- **Sincronización** con la respuesta del backend: el POST agrega la fila (`[...prev, saved]`), el PUT reemplaza sólo la fila editada (`map`) y el DELETE la quita (`filter`) **recién cuando el backend respondió 204**.
+- **Baja lógica**: desmarcar "Persona activa" y actualizar envía `estado: "INACTIVO"`.
+
+### Relación 1:N al eliminar
+
+Si la persona tiene residencias, PostgreSQL rechaza el DELETE por la clave foránea `fk_residencia_persona`; el backend responde **409** con el mensaje *"No se puede eliminar la persona 3 porque tiene residencias o reservas registradas. Puede cambiar su estado a INACTIVO."*. React muestra el error y **no quita la fila**.
+
+### Flujos
+
+| Acción | Flujo |
+|---|---|
+| Listar | Página → `personaService.listar` → GET → Controller → Service → Repository → SELECT → JSON → `setPersonas` |
+| Editar | Clic en Editar → GET/{id} → `editingPersona` → el formulario carga los datos → PUT → UPDATE → respuesta → `map()` reemplaza la fila |
+| Crear | Submit → validación → POST → INSERT → persona con id → la lista agrega la fila |
+| Eliminar | Clic → `confirm` → DELETE/{id} → FK → 204 → `filter()` quita la fila; 409 → se muestra el error y la fila queda |
+
+### Evidencias (DevTools → Network)
+
+| Acción | Petición | Status |
+|---|---|---|
+| Editar la persona 3 | `GET /api/personas/3` | 200 |
+| Actualizar apellido y desmarcar "activa" | `PUT /api/personas/3` | 200: la fila muestra "Guia Seis" e "Inactivo" |
+| Eliminar la persona 3 (tiene una residencia) | `DELETE /api/personas/3` | **409**: la fila se conserva |
+| Crear y eliminar una persona sin residencias | `POST` + `DELETE /api/personas/4` | 201 + **204**: la fila desaparece |
+| Editar y luego "Cancelar edición" | sólo `GET /api/personas/1` | El formulario vuelve a "Nueva persona" sin enviar nada |
+
+### Práctica evaluada
+
+- [x] `listar`, `obtenerPorId`, `crear`, `actualizar` y `eliminar` en el service de la entidad padre.
+- [x] Botones Editar y Eliminar en la tabla mediante callbacks.
+- [x] Un mismo formulario para crear y editar.
+- [x] GET/{id} antes de editar.
+- [x] Lista sincronizada después de POST, PUT y DELETE.
+- [x] Cancelar edición.
+- [x] Acciones bloqueadas mientras se guarda o elimina ("Guardando...", "Eliminando...").
+- [x] 404 real: `PUT` y `DELETE` sobre `/api/personas/999999` (colección de Postman).
+- [x] Eliminar la entidad padre con entidades hijas: **409** y la fila se conserva.
+- [x] Evidencia de Network para GET, POST, PUT y DELETE (tabla anterior).

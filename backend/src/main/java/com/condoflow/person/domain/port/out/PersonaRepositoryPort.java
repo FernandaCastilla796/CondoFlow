@@ -11,6 +11,7 @@ import java.util.Optional;
  */
 public interface PersonaRepositoryPort {
 
+    /** Inserta si la persona no tiene id; si lo tiene, actualiza esa fila. */
     Persona guardar(Persona persona);
 
     Optional<Persona> buscarPorId(Long id);
@@ -19,4 +20,13 @@ public interface PersonaRepositoryPort {
 
     /** Respalda la regla UNIQUE uq_persona_correo. */
     boolean existePorCorreoElectronico(String correoElectronico);
+
+    /** Igual que el anterior, pero ignora a la propia persona (al actualizar puede conservar su correo). */
+    boolean existePorCorreoElectronicoEnOtraPersona(String correoElectronico, Long personaId);
+
+    /**
+     * Borra la persona. Si tiene filas que la referencian (FK de residencia o reserva),
+     * lanza PersonaConRegistrosAsociadosException.
+     */
+    void eliminar(Long id);
 }

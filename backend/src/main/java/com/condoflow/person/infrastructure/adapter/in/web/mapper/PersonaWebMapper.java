@@ -1,6 +1,7 @@
 package com.condoflow.person.infrastructure.adapter.in.web.mapper;
 
 import com.condoflow.person.domain.model.Persona;
+import com.condoflow.person.infrastructure.adapter.in.web.dto.ActualizarPersonaRequest;
 import com.condoflow.person.infrastructure.adapter.in.web.dto.CrearPersonaRequest;
 import com.condoflow.person.infrastructure.adapter.in.web.dto.PersonaResponse;
 
@@ -17,6 +18,18 @@ public final class PersonaWebMapper {
                 request.documento(),
                 request.telefono(),
                 request.correoElectronico());
+    }
+
+    /** El id lo pone el caso de uso a partir de la URL; aquí la persona todavía no lo tiene. */
+    public static Persona toDomain(ActualizarPersonaRequest request) {
+        return new Persona(
+                null,
+                request.nombre(),
+                request.apellido(),
+                request.documento(),
+                request.telefono(),
+                request.correoElectronico(),
+                request.estado());
     }
 
     public static PersonaResponse toResponse(Persona persona) {

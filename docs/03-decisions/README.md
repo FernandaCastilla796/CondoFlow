@@ -156,6 +156,17 @@ Las siguientes decisiones se resolverán en las clases posteriores:
    - `GET /api/residencias` lista todas las residencias para la pantalla del frontend.
 5. **Consecuencias:** en producción hay que autorizar el dominio real del frontend. CORS no autentica usuarios: la autenticación sigue pendiente. Las variables `VITE_` llegan al navegador, por eso no guardan secretos.
 
+### D-16 — CRUD completo de Persona: PUT y DELETE
+
+1. **Contexto:** las guías del backend (Capítulos 04–08) pedían POST y GET; la Guía 06 del frontend pide el CRUD completo de la entidad padre.
+2. **Problema:** cómo actualizar y eliminar personas sin perder el historial de residencias (RN-01).
+3. **Alternativas consideradas:** DELETE en cascada de las residencias; prohibir el DELETE; DELETE sólo si no hay registros asociados y baja lógica para el resto.
+4. **Decisión tomada:**
+   - `PUT /api/personas/{id}` recibe la representación completa (`ActualizarPersonaRequest`, con `estado`). 404 si no existe; 409 si el correo pertenece a otra persona.
+   - `DELETE /api/personas/{id}` responde 204. Si la persona tiene residencias o reservas, PostgreSQL rechaza el borrado por la FK y el adaptador lo traduce a `PersonaConRegistrosAsociadosException` → **409**. No se usa `CascadeType.REMOVE` ni `ON DELETE CASCADE`.
+   - Para dar de baja a alguien con historial se usa el PUT con `estado = INACTIVO` (baja lógica).
+5. **Consecuencias:** el historial nunca se borra en cascada; el frontend muestra el 409 y conserva la fila.
+
 ## 5. Deuda técnica conocida
 
 - Autenticación y roles (RF-01, RN-06) todavía no implementados.

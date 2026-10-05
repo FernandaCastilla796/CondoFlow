@@ -2,7 +2,7 @@
 
 - Base: `http://localhost:8080`
 - Documentación interactiva: `http://localhost:8080/swagger-ui.html` (OpenAPI en `/v3/api-docs`)
-- Colección de Postman: [`CondoFlow.postman_collection.json`](CondoFlow.postman_collection.json). En Postman: *Import* → elegir el archivo → *Run collection*. Tiene 22 peticiones y cada una verifica su código HTTP esperado.
+- Colección de Postman: [`CondoFlow.postman_collection.json`](CondoFlow.postman_collection.json). En Postman: *Import* → elegir el archivo → *Run collection*. Tiene 27 peticiones y cada una verifica su código HTTP esperado.
 - Pruebas manuales en IntelliJ: [`backend/requests.http`](../../backend/requests.http)
 - Formato: JSON. Fechas en ISO `AAAA-MM-DD`.
 - CORS: el navegador sólo puede leer las respuestas de `/api/**` desde el origen del frontend en desarrollo, `http://localhost:5173` (`shared/web/WebConfig`, Guía 05 del frontend). Otro origen recibe `403 Invalid CORS request`. Postman no aplica CORS porque no es un navegador.
@@ -43,6 +43,8 @@
 | POST | `/api/personas` | `CrearPersonaRequest` | `PersonaResponse` | 201 / 400 / 409 |
 | GET | `/api/personas?filtro=texto` | `filtro` opcional (nombre completo o correo) | `PersonaResponse[]` | 200 |
 | GET | `/api/personas/{id}` | — | `PersonaResponse` | 200 / 400 / 404 |
+| PUT | `/api/personas/{id}` | `ActualizarPersonaRequest` | `PersonaResponse` | 200 / 400 / 404 / 409 |
+| DELETE | `/api/personas/{id}` | — | sin cuerpo | 204 / 404 / 409 |
 
 `CrearPersonaRequest`
 
@@ -53,6 +55,14 @@
 | `documento` | string | obligatorio, 5–50 letras, números o guiones |
 | `telefono` | string | obligatorio, 7–30 dígitos, `+` opcional |
 | `correoElectronico` | string | obligatorio, formato email, máx. 150, único (409 si se repite) |
+
+`ActualizarPersonaRequest`: los mismos campos y reglas de `CrearPersonaRequest` más `estado` (`ACTIVO` \| `INACTIVO`, obligatorio). Es la representación completa de la persona (PUT idempotente); el id va en la URL.
+
+Errores de negocio:
+
+- **404** si la persona del PUT o del DELETE no existe.
+- **409** en el PUT si el correo pertenece a **otra** persona (puede conservar el suyo).
+- **409** en el DELETE si la persona tiene residencias o reservas (FK `fk_residencia_persona` / `fk_reserva_persona`). Para darla de baja sin perder el historial se usa el PUT con `estado: "INACTIVO"` (baja lógica).
 
 `PersonaResponse`: `personaId`, `nombre`, `apellido`, `documento`, `telefono`, `correoElectronico` (en minúsculas), `estado` (`ACTIVO` \| `INACTIVO`).
 

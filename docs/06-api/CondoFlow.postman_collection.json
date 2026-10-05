@@ -94,6 +94,41 @@
           "name": "Buscar persona inexistente -> 404",
           "event": [{ "listen": "test", "script": { "exec": ["pm.test('404 Not Found', () => pm.response.to.have.status(404));"] } }],
           "request": { "method": "GET", "url": "{{baseUrl}}/api/personas/999999" }
+        },
+        {
+          "name": "Actualizar persona creada -> 200",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));", "pm.test('mismo id y datos nuevos', () => { const p = pm.response.json(); pm.expect(p.personaId).to.eql(Number(pm.collectionVariables.get('personaId'))); pm.expect(p.apellido).to.eql('Suarez Vaca'); });"] } }],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/personas/{{personaId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Suarez Vaca\",\n  \"documento\": \"9988776\",\n  \"telefono\": \"+591 71112233\",\n  \"correoElectronico\": \"{{correo}}\",\n  \"estado\": \"ACTIVO\"\n}" }
+          }
+        },
+        {
+          "name": "Actualizar sin estado -> 400",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('400 Bad Request', () => pm.response.to.have.status(400));", "pm.test('error en estado', () => pm.expect(pm.response.json().fieldErrors).to.have.property('estado'));"] } }],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/personas/{{personaId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Suarez\",\n  \"documento\": \"9988776\",\n  \"telefono\": \"+591 71112233\",\n  \"correoElectronico\": \"{{correo}}\"\n}" }
+          }
+        },
+        {
+          "name": "Actualizar persona inexistente -> 404",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('404 Not Found', () => pm.response.to.have.status(404));"] } }],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/personas/999999",
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Suarez\",\n  \"documento\": \"9988776\",\n  \"telefono\": \"+591 71112233\",\n  \"correoElectronico\": \"nadie@condoflow.com\",\n  \"estado\": \"ACTIVO\"\n}" }
+          }
+        },
+        {
+          "name": "Eliminar persona inexistente -> 404",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('404 Not Found', () => pm.response.to.have.status(404));"] } }],
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/personas/999999" }
         }
       ]
     },
@@ -184,6 +219,11 @@
           "name": "Residencias de la persona -> 200",
           "event": [{ "listen": "test", "script": { "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));", "pm.test('al menos una', () => pm.expect(pm.response.json().length).to.be.above(0));"] } }],
           "request": { "method": "GET", "url": "{{baseUrl}}/api/residencias/persona/{{personaId}}" }
+        },
+        {
+          "name": "Eliminar persona con residencias -> 409",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('409 Conflict', () => pm.response.to.have.status(409));", "pm.test('sugiere la baja lógica', () => pm.expect(pm.response.json().message).to.include('INACTIVO'));"] } }],
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/personas/{{personaId}}" }
         }
       ]
     }
