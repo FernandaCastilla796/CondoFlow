@@ -1,9 +1,6 @@
-// Objetivo mínimo temporal de App.tsx (Guía 01)
+import AppRouter from '../routes/AppRouter';
+
+// Única responsabilidad: delegar el árbol de pantallas al router (Guía 02).
 export default function App() {
-  return (
-    <main>
-      <h1>CondoFlow</h1>
-      <p>Frontend en construcción</p>
-    </main>
-  );
+  return <AppRouter />;
 }

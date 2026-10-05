@@ -61,6 +61,7 @@ Construir una plataforma web y móvil que permita centralizar la administración
 | Capítulos 01–02: Java 21 esencial en `condoflow-backend-lab/` | ✅ |
 | Capítulos 03–08: backend Spring Boot con Persona → Residencia, arquitectura hexagonal, errores y transacciones | ✅ |
 | Frontend Guía 01: estructura React + TypeScript + Vite en `web/` | ✅ |
+| Frontend Guía 02: React Router, layout principal y menú | ✅ |
 | Móvil, autenticación y resto de módulos | ⬜ próximas clases |
 
 ## 8. Documentación
