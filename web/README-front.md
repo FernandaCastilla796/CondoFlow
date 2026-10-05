@@ -99,3 +99,47 @@ Se instaló React Router con `npm install react-router` (API declarativa del paq
 ### Qué no se hizo todavía
 
 Según la guía, todavía no se llamó al backend ni se agregaron formularios: primero se aisló el problema de navegación y layout.
+
+---
+
+## Guía 03 — Modelos TypeScript, datos simulados y tablas
+
+Todavía no se llama al backend: primero se domina el modelo de datos, las props y el renderizado de listas.
+
+| Archivo | Responsabilidad |
+|---|---|
+| `features/personas/models/Persona.ts` | Interface `Persona` (y el tipo `EstadoPersona`). Se movió desde `types/` porque la guía separa *modelos* de *tipos de formulario*. |
+| `features/residencias/models/Residencia.ts` | Interface `Residencia` con `personaId`, que representa la relación 1:N. |
+| `features/*/data/*.mock.ts` | Datos simulados tipados como `Persona[]` y `Residencia[]`. |
+| `features/personas/components/PersonaTable.tsx` | Recibe `personas` por props y dibuja una fila por persona con `map()`. |
+| `features/residencias/components/ResidenciaTable.tsx` | Recibe `residencias` y `personas`; con `find()` convierte `personaId` en un nombre. |
+| `features/*/pages/*Page.tsx` | Eligen los datos, calculan las tarjetas con `filter()` y se los pasan a la tabla. |
+| `utils/formatDate.ts` | Muestra las fechas ISO de la API como `dd/mm/aaaa`. |
+
+**Alineación con el backend.** Los campos no son los didácticos de la guía (`id`, `email`, `activo`), sino los del contrato real de la API (`personaId`, `correoElectronico`, `estado`), como pide la guía: *"si tu backend usa otros nombres exactos, alinea los modelos con el contrato real"*. El estado es una unión de textos (`'ACTIVO' | 'INACTIVO'`), no un `boolean`, porque así lo guarda PostgreSQL (CHECK `ck_persona_estado`).
+
+### Flujo datos → props → map → JSX → DOM
+
+```
+personas.mock.ts      exporta Persona[]
+      ↓
+PersonasPage.tsx      pasa personas={personasMock}
+      ↓
+PersonaTable.tsx      recibe Persona[] por props
+      ↓
+personas.map(...)     transforma cada objeto en un <tr> con key={persona.personaId}
+      ↓
+React actualiza el DOM y el navegador muestra la tabla
+```
+
+En residencias el flujo es igual, pero `ResidenciaTable` también recibe `personasMock` para convertir `personaId` en el nombre de la persona.
+
+### Práctica obligatoria
+
+- [x] Dos personas nuevas en el mock: Ana Mendez (activa) y Jorge Paz (inactiva).
+- [x] Tres residencias nuevas asociadas a personas existentes (ids 5, 6 y 7).
+- [x] Una residencia con `personaId: 999`: la tabla muestra **"Sin persona asociada"**.
+- [x] Error de tipo provocado a propósito: con `unidadId: '1'` el compilador respondió `error TS2322: Type 'string' is not assignable to type 'number'.` porque el modelo exige `number`. Se corrigió.
+- [x] Con `personasMock = []` la página muestra 0 en las tarjetas y el mensaje **"No hay personas registradas."** (retorno temprano). Se restauraron los datos.
+- [x] Al cambiar una fecha de una residencia sólo cambia esa fila: React identifica cada fila por su `key` estable (`residenciaId`).
+- [x] `npm run build` sin errores.
