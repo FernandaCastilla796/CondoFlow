@@ -63,6 +63,7 @@ Construir una plataforma web y móvil que permita centralizar la administración
 | Frontend Guía 01: estructura React + TypeScript + Vite en `web/` | ✅ |
 | Frontend Guía 02: React Router, layout principal y menú | ✅ |
 | Frontend Guía 03: modelos TypeScript, datos simulados y tablas | ✅ |
+| Frontend Guía 04: formularios controlados con validación | ✅ |
 | Móvil, autenticación y resto de módulos | ⬜ próximas clases |
 
 ## 8. Documentación
