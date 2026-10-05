@@ -224,6 +224,51 @@
           "name": "Eliminar persona con residencias -> 409",
           "event": [{ "listen": "test", "script": { "exec": ["pm.test('409 Conflict', () => pm.response.to.have.status(409));", "pm.test('sugiere la baja lógica', () => pm.expect(pm.response.json().message).to.include('INACTIVO'));"] } }],
           "request": { "method": "DELETE", "url": "{{baseUrl}}/api/personas/{{personaId}}" }
+        },
+        {
+          "name": "Finalizar residencia (PUT) -> 200",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));", "pm.test('queda FINALIZADA con fecha de fin', () => { const r = pm.response.json(); pm.expect(r.estado).to.eql('FINALIZADA'); pm.expect(r.fechaFin).to.eql('2026-12-31'); });"] } }],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/residencias/{{residenciaId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"personaId\": {{personaId}},\n  \"unidadId\": {{unidadId}},\n  \"tipoResidencia\": \"INQUILINO\",\n  \"fechaInicio\": \"2026-09-01\",\n  \"fechaFin\": \"2026-12-31\",\n  \"estado\": \"FINALIZADA\"\n}" }
+          }
+        },
+        {
+          "name": "Finalizar sin fecha de fin -> 400",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('400 Bad Request', () => pm.response.to.have.status(400));", "pm.test('mensaje del dominio', () => pm.expect(pm.response.json().message).to.eql('Una residencia finalizada necesita fecha de fin'));"] } }],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/residencias/{{residenciaId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"personaId\": {{personaId}},\n  \"unidadId\": {{unidadId}},\n  \"tipoResidencia\": \"INQUILINO\",\n  \"fechaInicio\": \"2026-09-01\",\n  \"fechaFin\": null,\n  \"estado\": \"FINALIZADA\"\n}" }
+          }
+        },
+        {
+          "name": "Reasignar a una persona inexistente -> 404",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('404 Not Found', () => pm.response.to.have.status(404));"] } }],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/residencias/{{residenciaId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"personaId\": 999999,\n  \"unidadId\": {{unidadId}},\n  \"tipoResidencia\": \"INQUILINO\",\n  \"fechaInicio\": \"2026-09-01\",\n  \"fechaFin\": null,\n  \"estado\": \"VIGENTE\"\n}" }
+          }
+        },
+        {
+          "name": "Eliminar residencia -> 204",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('204 No Content', () => pm.response.to.have.status(204));"] } }],
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/residencias/{{residenciaId}}" }
+        },
+        {
+          "name": "Eliminar residencia inexistente -> 404",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('404 Not Found', () => pm.response.to.have.status(404));"] } }],
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/residencias/{{residenciaId}}" }
+        },
+        {
+          "name": "Eliminar persona sin residencias -> 204",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('204 No Content', () => pm.response.to.have.status(204));"] } }],
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/personas/{{personaId}}" }
         }
       ]
     }

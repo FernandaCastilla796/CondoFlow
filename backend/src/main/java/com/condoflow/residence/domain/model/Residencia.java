@@ -29,6 +29,13 @@ public class Residencia {
         if (fechaFin != null && fechaFin.isBefore(fechaInicio)) {
             throw new IllegalArgumentException("La fecha de fin no puede ser anterior a la fecha de inicio");
         }
+        // RN-01, igual que el CHECK ck_residencia_estado_fecha_fin: vigente sin fin, finalizada con fin.
+        if (estado == EstadoResidencia.VIGENTE && fechaFin != null) {
+            throw new IllegalArgumentException("Una residencia vigente no tiene fecha de fin");
+        }
+        if (estado == EstadoResidencia.FINALIZADA && fechaFin == null) {
+            throw new IllegalArgumentException("Una residencia finalizada necesita fecha de fin");
+        }
     }
 
     /** Toda residencia nueva nace VIGENTE y sin fecha de fin. */

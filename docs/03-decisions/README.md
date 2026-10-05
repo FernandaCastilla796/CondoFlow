@@ -167,10 +167,20 @@ Las siguientes decisiones se resolverán en las clases posteriores:
    - Para dar de baja a alguien con historial se usa el PUT con `estado = INACTIVO` (baja lógica).
 5. **Consecuencias:** el historial nunca se borra en cascada; el frontend muestra el 409 y conserva la fila.
 
+### D-17 — CRUD completo de Residencia: reasignar, finalizar y eliminar
+
+1. **Contexto:** la Guía 07 del frontend pide el CRUD de la entidad hija, incluido cambiar su padre (la persona) con un PUT.
+2. **Problema:** cómo actualizar una residencia sin romper RN-01 (vigencia temporal) ni la regla de una sola residencia vigente por persona y unidad.
+3. **Alternativas consideradas:** un endpoint separado sólo para finalizar; un PUT con la representación completa.
+4. **Decisión tomada:**
+   - `PUT /api/residencias/{id}` recibe la representación completa (`ActualizarResidenciaRequest`). Cambiar `personaId` reasigna la residencia (UPDATE de la FK `persona_id`); `estado = FINALIZADA` con `fechaFin` cierra la vigencia.
+   - El servicio valida como en el registro: 404 si no existen la residencia, la persona o la unidad; 409 si quedaría otra residencia `VIGENTE` de la misma persona en la misma unidad. El dominio `Residencia` valida la coherencia entre estado y fecha de fin (400), igual que el CHECK `ck_residencia_estado_fecha_fin`.
+   - `DELETE /api/residencias/{id}` responde 204: sirve para corregir un registro hecho por error. Para conservar el historial se finaliza la residencia en lugar de borrarla.
+5. **Consecuencias:** queda resuelto el caso de uso para cerrar la vigencia de una residencia (RN-01), que figuraba como deuda técnica.
+
 ## 5. Deuda técnica conocida
 
 - Autenticación y roles (RF-01, RN-06) todavía no implementados.
-- No existe todavía el caso de uso para cerrar la vigencia de una residencia (RN-01).
 - Los listados no tienen paginación (RNF-13).
 - `visita`, `incidencia` y `tarea_mantenimiento` aún no tienen tabla ni módulo.
 - La aplicación móvil (React Native) todavía no se inició.

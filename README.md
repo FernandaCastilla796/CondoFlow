@@ -66,6 +66,7 @@ Construir una plataforma web y móvil que permita centralizar la administración
 | Frontend Guía 04: formularios controlados con validación | ✅ |
 | Frontend Guía 05: conexión con la API (CORS, `apiClient`, services, GET y POST reales) | ✅ |
 | Frontend Guía 06: CRUD completo de Persona (PUT y DELETE en el backend) | ✅ |
+| Frontend Guía 07: CRUD de Residencia con la relación Persona 1:N (reasignar, finalizar, filtrar) | ✅ |
 | Móvil, autenticación y resto de módulos | ⬜ próximas clases |
 
 ## 8. Documentación

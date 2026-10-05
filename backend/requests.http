@@ -177,3 +177,45 @@ GET http://localhost:8080/api/residencias/persona/2
 
 ### Residencias de una persona inexistente -> 404
 GET http://localhost:8080/api/residencias/persona/999
+
+### Reasignar la residencia 1 a otra persona (PUT) -> 200 (Guía 07 del frontend)
+PUT http://localhost:8080/api/residencias/1
+Content-Type: application/json
+
+{
+  "personaId": 2,
+  "unidadId": 1,
+  "tipoResidencia": "PROPIETARIO",
+  "fechaInicio": "2026-09-29",
+  "fechaFin": null,
+  "estado": "VIGENTE"
+}
+
+### Finalizar una residencia (RN-01) -> 200
+PUT http://localhost:8080/api/residencias/1
+Content-Type: application/json
+
+{
+  "personaId": 1,
+  "unidadId": 1,
+  "tipoResidencia": "PROPIETARIO",
+  "fechaInicio": "2026-09-29",
+  "fechaFin": "2026-12-31",
+  "estado": "FINALIZADA"
+}
+
+### Finalizar sin fecha de fin -> 400
+PUT http://localhost:8080/api/residencias/1
+Content-Type: application/json
+
+{
+  "personaId": 1,
+  "unidadId": 1,
+  "tipoResidencia": "PROPIETARIO",
+  "fechaInicio": "2026-09-29",
+  "fechaFin": null,
+  "estado": "FINALIZADA"
+}
+
+### Eliminar residencia inexistente -> 404
+DELETE http://localhost:8080/api/residencias/999
