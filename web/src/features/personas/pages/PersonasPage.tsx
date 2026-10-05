@@ -1,16 +1,28 @@
+import PersonaTable from '../components/PersonaTable';
+import { personasMock } from '../data/personas.mock';
+
+// La página conoce el origen de los datos y se los entrega a la tabla mediante la prop personas.
 export default function PersonasPage() {
+  const total = personasMock.length;
+  const activas = personasMock.filter((persona) => persona.estado === 'ACTIVO').length;
+
   return (
-    <section>
+    <section className="feature-page">
       <div className="page-heading">
         <div>
-          <p className="page-heading__eyebrow">Módulo</p>
-          <h2>Personas</h2>
+          <p className="eyebrow">GESTIÓN DE PERSONAS</p>
+          <h1>Personas</h1>
+          <p>Listado local preparado para la futura integración con la API REST.</p>
         </div>
       </div>
-      <div className="placeholder-card">
-        <h3>Gestión de personas</h3>
-        <p>Aquí construiremos el listado y los formularios CRUD.</p>
+
+      <div className="stats-grid">
+        <article className="stat-card"><span>Total</span><strong>{total}</strong></article>
+        <article className="stat-card"><span>Activas</span><strong>{activas}</strong></article>
+        <article className="stat-card"><span>Inactivas</span><strong>{total - activas}</strong></article>
       </div>
+
+      <PersonaTable personas={personasMock} />
     </section>
   );
 }
