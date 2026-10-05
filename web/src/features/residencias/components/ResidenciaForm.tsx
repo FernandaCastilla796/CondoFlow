@@ -1,9 +1,18 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
-import { personasMock } from '../../personas/data/personas.mock';
-import { unidadesMock } from '../../unidades/data/unidades.mock';
-import type { TipoResidencia } from '../models/Residencia';
+import { ApiError } from '../../../api/apiClient';
+import type { Persona } from '../../personas/models/Persona';
+import type { Unidad } from '../../unidades/models/Unidad';
+import type { Residencia, TipoResidencia } from '../models/Residencia';
+import { residenciaService } from '../services/residenciaService';
+import type { ResidenciaCreateRequest } from '../types/ResidenciaCreateRequest';
 import type { ResidenciaFormData } from '../types/ResidenciaFormData';
 import { validarResidencia, type ResidenciaFormErrors } from '../utils/residenciaValidation';
+
+interface ResidenciaFormProps {
+  personas: Persona[];
+  unidades: Unidad[];
+  onCreated?: (residencia: Residencia) => void;
+}
 
 const initialResidenciaForm: ResidenciaFormData = {
   personaId: '',
@@ -12,11 +21,12 @@ const initialResidenciaForm: ResidenciaFormData = {
   fechaInicio: '',
 };
 
-export default function ResidenciaForm() {
+export default function ResidenciaForm({ personas, unidades, onCreated }: ResidenciaFormProps) {
   const [formData, setFormData] = useState<ResidenciaFormData>(initialResidenciaForm);
   const [errors, setErrors] = useState<ResidenciaFormErrors>({});
   const [mensaje, setMensaje] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [apiError, setApiError] = useState('');
 
   const cantidadErrores = Object.keys(errors).length;
 
@@ -28,31 +38,40 @@ export default function ResidenciaForm() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMensaje('');
+    setApiError('');
 
     const validationErrors = validarResidencia(formData);
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
 
     // Recién después de validar se convierten los textos a los tipos del dominio.
-    const residenciaPayload = {
+    // React no "crea" la relación: sólo envía la referencia personaId; el backend la valida y la guarda.
+    const payload: ResidenciaCreateRequest = {
       personaId: Number(formData.personaId),
       unidadId: Number(formData.unidadId),
       tipoResidencia: formData.tipoResidencia as TipoResidencia,
       fechaInicio: formData.fechaInicio,
     };
 
-    setSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    setSubmitting(false);
-
-    console.log('Residencia lista para API:', residenciaPayload);
-    setMensaje('Datos válidos. Residencia lista para enviarse al backend.');
+    try {
+      setSubmitting(true);
+      const creada = await residenciaService.crear(payload);
+      onCreated?.(creada);
+      setFormData(initialResidenciaForm);
+      setMensaje('Residencia registrada correctamente.');
+    } catch (err) {
+      if (err instanceof ApiError) setErrors(err.fieldErrors as ResidenciaFormErrors);
+      setApiError(err instanceof Error ? err.message : 'No se pudo registrar la residencia');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const limpiar = () => {
     setFormData(initialResidenciaForm);
     setErrors({});
     setMensaje('');
+    setApiError('');
   };
 
   return (
@@ -63,7 +82,7 @@ export default function ResidenciaForm() {
           {/* El usuario ve el nombre, pero el estado guarda personaId: así se representa la relación 1:N. */}
           <select name="personaId" value={formData.personaId} onChange={handleChange}>
             <option value="">Seleccione una persona</option>
-            {personasMock
+            {personas
               .filter((persona) => persona.estado === 'ACTIVO')
               .map((persona) => (
                 <option key={persona.personaId} value={persona.personaId}>
@@ -78,7 +97,7 @@ export default function ResidenciaForm() {
           Unidad
           <select name="unidadId" value={formData.unidadId} onChange={handleChange}>
             <option value="">Seleccione una unidad</option>
-            {unidadesMock
+            {unidades
               .filter((unidad) => unidad.estado === 'ACTIVA')
               .map((unidad) => (
                 <option key={unidad.unidadId} value={unidad.unidadId}>
@@ -109,6 +128,7 @@ export default function ResidenciaForm() {
       {cantidadErrores > 0 && (
         <div className="form-error-count">El formulario tiene {cantidadErrores} error(es).</div>
       )}
+      {apiError && <div className="form-error">{apiError}</div>}
       {mensaje && <div className="form-success">{mensaje}</div>}
 
       <div className="form-actions">

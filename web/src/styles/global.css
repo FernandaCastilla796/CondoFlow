@@ -181,3 +181,24 @@ button, input, select, textarea { font: inherit; }
 @media (max-width: 900px) {
   .stats-grid { grid-template-columns: 1fr; }
 }
+
+/* ===== Guía 05: estados de carga, error y respuesta del backend ===== */
+.state-card,
+.form-error {
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin: 12px 0;
+}
+
+.state-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+
+.state-card.error,
+.form-error {
+  background: #fdecec;
+  border: 1px solid #f5c2c2;
+  color: #991b1b;
+}

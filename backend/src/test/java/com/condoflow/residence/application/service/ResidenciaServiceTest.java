@@ -101,6 +101,14 @@ class ResidenciaServiceTest {
     }
 
     @Test
+    void listarDevuelveTodasLasResidencias() {
+        Residencia r = new Residencia(5L, 1L, 1L, TipoResidencia.INQUILINO, INICIO, null, EstadoResidencia.VIGENTE);
+        when(repositoryPort.listar()).thenReturn(List.of(r));
+
+        assertThat(service.listar()).containsExactly(r);
+    }
+
+    @Test
     void listarPorPersonaInexistenteLanzaNoEncontrada() {
         when(consultarPersona.buscarPorId(99L)).thenReturn(Optional.empty());
 

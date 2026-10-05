@@ -11,6 +11,8 @@ public interface ResidenciaRepositoryPort {
 
     Optional<Residencia> buscarPorId(Long id);
 
+    List<Residencia> listar();
+
     List<Residencia> listarPorPersonaId(Long personaId);
 
     /** Respalda el índice UNIQUE parcial uq_residencia_vigente_persona_unidad. */

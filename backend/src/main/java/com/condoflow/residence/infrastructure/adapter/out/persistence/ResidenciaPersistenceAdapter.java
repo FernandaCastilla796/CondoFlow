@@ -7,6 +7,7 @@ import com.condoflow.residence.domain.port.out.ResidenciaRepositoryPort;
 import com.condoflow.residence.infrastructure.adapter.out.persistence.mapper.ResidenciaPersistenceMapper;
 import com.condoflow.residence.infrastructure.adapter.out.persistence.repository.SpringDataResidenciaRepository;
 import com.condoflow.unit.infrastructure.adapter.out.persistence.repository.SpringDataUnidadRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -44,6 +45,14 @@ public class ResidenciaPersistenceAdapter implements ResidenciaRepositoryPort {
     @Override
     public Optional<Residencia> buscarPorId(Long id) {
         return repository.findById(id).map(ResidenciaPersistenceMapper::toDomain);
+    }
+
+    @Override
+    public List<Residencia> listar() {
+        // Sin SELECT extra por fila: el mapper sólo lee el id de los proxies LAZY de persona y unidad.
+        return repository.findAll(Sort.by("id")).stream()
+                .map(ResidenciaPersistenceMapper::toDomain)
+                .toList();
     }
 
     @Override

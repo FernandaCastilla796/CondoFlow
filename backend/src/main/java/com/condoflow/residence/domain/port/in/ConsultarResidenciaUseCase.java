@@ -9,5 +9,8 @@ public interface ConsultarResidenciaUseCase {
 
     Optional<Residencia> buscarPorId(Long id);
 
+    /** Todas las residencias, para el listado del frontend (Guía 05). */
+    List<Residencia> listar();
+
     List<Residencia> listarPorPersona(Long personaId);
 }
